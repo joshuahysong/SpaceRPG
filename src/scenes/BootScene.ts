@@ -1,5 +1,5 @@
 import { Scene } from 'phaser'
-import ship from '../assets/ship.png'
+import ship from './../assets/ship.png'
 
 export default class BootScene extends Scene {
     constructor() {
