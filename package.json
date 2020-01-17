@@ -1,7 +1,7 @@
 {
-  "name": "SpaceRPG",
-  "version": "0.1.0",
-  "private": true,
+  "name": "space-rpg",
+  "version": "0.0.1",
+  "homepage": "./SpaceRPG/",
   "scripts": {
     "start": "phaser-scripts start",
     "build": "phaser-scripts build",

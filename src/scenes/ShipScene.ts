@@ -27,6 +27,7 @@ export default class ShipScene extends Scene {
 
     public update(time: number, delta: number) {
         if(this.input.activePointer.isDown){
+            // TODO Work correctly with touch
             if (this.oldPointerPosition) { // if moving the world always continue from the last position
                 this.cameras.main.scrollX += (this.oldPointerPosition.x - this.input.activePointer.position.x) / this.cameras.main.zoom;
                 this.cameras.main.scrollY += (this.oldPointerPosition.y - this.input.activePointer.position.y) / this.cameras.main.zoom;
