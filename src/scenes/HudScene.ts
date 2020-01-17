@@ -16,7 +16,7 @@ export default class HudScene extends Scene {
     }
 
     private bindEvents() {
-        let worldCamera = this.scene.get('PlayScene').cameras.main;
+        let worldCamera = this.scene.get('ShipScene').cameras.main;
         this.input.on('pointermove', function (pointer: any) {
             let worldPosition = worldCamera.getWorldPoint(pointer.x, pointer.y);
             this.debugText.setText([

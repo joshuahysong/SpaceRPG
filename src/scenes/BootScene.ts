@@ -11,6 +11,6 @@ export default class BootScene extends Scene {
     }
 
     public create() {
-        this.scene.start('PlayScene');
+        this.scene.start('ShipScene');
     }
 }

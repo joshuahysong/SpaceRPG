@@ -5,8 +5,7 @@ export default class ShipScene extends Scene {
         super({ key: 'ShipScene' })
     }
   
-    cursors: Phaser.Input.Keyboard.CursorKeys;
-    cameraControls: Phaser.Cameras.Controls.SmoothedKeyControl;
+    oldPointerPosition: Phaser.Math.Vector2;
     tileSize: integer = 20;
     worldSize: integer = 200;
     shipArray: Array<Array<integer>> = [[0,1,0],
@@ -14,7 +13,6 @@ export default class ShipScene extends Scene {
                                         [0,1,0]];
 
     public create() {
-        this.cursors = this.input.keyboard.createCursorKeys();
         this.cameras.main.setBounds(
             -1 * this.tileSize * this.worldSize / 2, 
             -1 * this.tileSize * this.worldSize / 2, 
@@ -22,31 +20,25 @@ export default class ShipScene extends Scene {
             this.tileSize * this.worldSize);
         this.cameras.main.centerOn(0, 0);
 
-        var controlConfig = {
-            camera: this.cameras.main,
-            left: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A),
-            right: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D),
-            up: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W),
-            down: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S),
-            acceleration: 0.5,
-            drag: 0.1,
-            maxSpeed: 0.5
-        };
-    
-        this.cameraControls = new Phaser.Cameras.Controls.SmoothedKeyControl(controlConfig);
-
         this.bindEvents();
         this.drawGrid();
         this.drawShip();
     }
 
     public update(time: number, delta: number) {
-        this.cameraControls.update(delta);
+        if(this.input.activePointer.isDown){
+            if (this.oldPointerPosition) { // if moving the world always continue from the last position
+                this.cameras.main.scrollX += (this.oldPointerPosition.x - this.input.activePointer.position.x) / this.cameras.main.zoom;
+                this.cameras.main.scrollY += (this.oldPointerPosition.y - this.input.activePointer.position.y) / this.cameras.main.zoom;
+            }
+        }
+        this.oldPointerPosition = this.input.activePointer.position.clone();
     }
 
     private bindEvents() {
-        this.input.on('wheel', function(pointer: any){
+        this.input.on('wheel', function(pointer: Phaser.Input.Pointer){
             // TODO Zoom to cursor
+            let oldZoom = this.cameras.main.zoom;
             let newZoom = this.cameras.main.zoom;
             if (pointer.deltaY < 0) {
                 newZoom += 0.2;
@@ -54,7 +46,9 @@ export default class ShipScene extends Scene {
                 newZoom -= 0.2;
             }
             newZoom = newZoom > 3 ? 3 : newZoom < 0.5 ? 0.5 : newZoom;
-            this.cameras.main.zoomTo(newZoom, 0);
+            if (oldZoom !== newZoom) {
+                this.cameras.main.zoomTo(newZoom, 0);
+            }
          }, this);
     }
 
