@@ -22,20 +22,19 @@ export default class ShipScene extends Scene {
 
         this.bindEvents();
         this.drawGrid();
-        this.drawShip();
+        this.drawShip();       
     }
 
     public update(time: number, delta: number) {
         if(this.input.activePointer.isDown){
             if (this.oldPointerPosition) {
-                console.log(this.oldPointerPosition);
                 this.cameras.main.scrollX += (this.oldPointerPosition.x - this.input.activePointer.position.x) / this.cameras.main.zoom;
                 this.cameras.main.scrollY += (this.oldPointerPosition.y - this.input.activePointer.position.y) / this.cameras.main.zoom;
             }
             this.oldPointerPosition = this.input.activePointer.position.clone();
         } else {
             this.oldPointerPosition = null;
-        }
+        }        
     }
 
     private bindEvents() {
@@ -52,7 +51,14 @@ export default class ShipScene extends Scene {
             if (oldZoom !== newZoom) {
                 this.cameras.main.zoomTo(newZoom, 0);
             }
-         }, this);
+        }, this);
+        this.input.keyboard.on('keydown_F4', function () {
+            if (this.scene.isSleeping('DebugScene')) {
+                this.scene.wake('DebugScene');
+            } else {
+                this.scene.sleep('DebugScene');
+            }
+        }, this);
     }
 
     private drawGrid() {

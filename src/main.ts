@@ -1,7 +1,7 @@
 import * as Phaser from 'phaser'
 import BootScene from './scenes/BootScene'
 import ShipScene from './scenes/ShipScene'
-import HudScene from './scenes/HudScene'
+import DebugScene from './scenes/DebugScene'
 
 declare global {
     interface Window {
@@ -14,7 +14,7 @@ const config: Phaser.Types.Core.GameConfig = {
     parent: 'app',
     width: window.innerWidth,
     height: window.innerHeight,
-    scene: [BootScene, ShipScene, HudScene],
+    scene: [BootScene, ShipScene, DebugScene],
     scale: {
         mode: Phaser.Scale.RESIZE,
         autoCenter: Phaser.Scale.CENTER_BOTH,
