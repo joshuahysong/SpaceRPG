@@ -14,7 +14,7 @@ export default class DebugScene extends Scene {
     }
 
     public create() {
-        this.worldCamera = this.scene.get('ShipScene').cameras.main; 
+        this.worldCamera = this.scene.get('ShipScene').cameras.main;
         this.drawStartingText();
         this.bindEvents();
     }

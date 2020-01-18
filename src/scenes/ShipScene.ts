@@ -5,21 +5,15 @@ export default class ShipScene extends Scene {
         super({ key: 'ShipScene' })
     }
   
-    oldPointerPosition: Phaser.Math.Vector2;
     tileSize: integer = 20;
     worldSize: integer = 200;
+    oldPointerPosition: Phaser.Math.Vector2;
     shipArray: Array<Array<integer>> = [[0,1,0],
                                         [1,1,1],
                                         [0,1,0]];
 
     public create() {
-        this.cameras.main.setBounds(
-            -1 * this.tileSize * this.worldSize / 2, 
-            -1 * this.tileSize * this.worldSize / 2, 
-            this.tileSize * this.worldSize, 
-            this.tileSize * this.worldSize);
-        this.cameras.main.centerOn(0, 0);
-
+        this.setupCameras();
         this.bindEvents();
         this.drawGrid();
         this.drawShip();       
@@ -34,7 +28,16 @@ export default class ShipScene extends Scene {
             this.oldPointerPosition = this.input.activePointer.position.clone();
         } else {
             this.oldPointerPosition = null;
-        }        
+        }
+    }
+
+    private setupCameras() {        
+        this.cameras.main.setBounds(
+            -1 * this.tileSize * this.worldSize / 2, 
+            -1 * this.tileSize * this.worldSize / 2, 
+            this.tileSize * this.worldSize,
+            this.tileSize * this.worldSize);
+        this.cameras.main.centerOn(0, 0);
     }
 
     private bindEvents() {
@@ -62,6 +65,7 @@ export default class ShipScene extends Scene {
     }
 
     private drawGrid() {
+        // TODO Non-square world grid
         let bounds = this.cameras.main.getBounds();
         let targetWidth = bounds.width;
         let targetHeight = bounds.height;
@@ -83,10 +87,10 @@ export default class ShipScene extends Scene {
     private drawShip() {     
         let offsetX: integer = this.shipArray[0].length * this.tileSize / 2;
         let offsetY: integer = this.shipArray.length * this.tileSize / 2;
-        for (var y = 0; y < this.shipArray.length; y++) {
-            for (var x = 0; x < this.shipArray[y].length; x++){            
+        for (let y = 0; y < this.shipArray.length; y++) {
+            for (let x = 0; x < this.shipArray[y].length; x++){            
                 if (this.shipArray[y][x] === 1) {
-                    var tile = this.add.image(x * this.tileSize + (this.tileSize / 2) - offsetX, 
+                    let tile = this.add.image(x * this.tileSize + (this.tileSize / 2) - offsetX, 
                         y * this.tileSize + (this.tileSize / 2)- offsetY, 'ship')
                     tile.displayWidth = this.tileSize;
                     tile.scaleY = tile.scaleX;
