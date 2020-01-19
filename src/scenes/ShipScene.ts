@@ -5,7 +5,7 @@ export default class ShipScene extends SceneBase {
         super({ key: 'ShipScene' })
     }
 
-    tileSize: integer = 20;
+    tileSize: integer = 32;
     worldSize: integer = 200;
     oldPointerPosition: Phaser.Math.Vector2;
     debugObjects: Array<any>;
@@ -76,6 +76,13 @@ export default class ShipScene extends SceneBase {
                 this.scene.stop('DebugScene');
             }
         }, this);
+
+        if (this.sys.game.device.os.desktop) {
+            this.input.on('pointermove', function (pointer: any) {
+                let worldPoint = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
+                this.events.emit('tileCoordinates', this.getTileCoordinates(worldPoint.x, worldPoint.y));
+            }, this);
+        }     
     }
 
     private drawGrid() {
@@ -111,11 +118,17 @@ export default class ShipScene extends SceneBase {
     }
 
     private drawDebug() {
+        // Center lines
         this.debugObjects = [];
         let bounds = this.cameras.main.getBounds();
         let targetWidth = bounds.width;
         let targetHeight = bounds.height;
         this.debugObjects.push(this.drawLine(0, targetHeight / 2 * -1, 0, targetHeight / 2, '#0000ff', 0.5));
         this.debugObjects.push(this.drawLine(targetWidth / 2 * -1, 0, targetWidth / 2, 0, '#0000ff', 0.5));
+    }
+
+    private getTileCoordinates(x: number, y: number): Phaser.Geom.Point {   
+        let offset = this.tileSize / 2;  
+        return new Phaser.Geom.Point(Math.floor((x + offset) / this.tileSize), Math.floor((y + offset) / this.tileSize))
     }
 }

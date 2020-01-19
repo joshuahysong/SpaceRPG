@@ -21,12 +21,13 @@ export default class DebugScene extends SceneBase {
         this.cameraText.setText([
             '---- Camera ----',
             'Size: ' + cameraBounds.width + ', ' + cameraBounds.height,
+            'View: ' + Math.round(this.worldCamera.worldView.width) + ', ' + Math.round(this.worldCamera.worldView.height),
             'Center: ' + Math.round(this.worldCamera.worldView.centerX) + ', ' + Math.round(this.worldCamera.worldView.centerY),
             'Zoom: ' + this.worldCamera.zoom.toFixed(2)
         ]);
     }
 
-    private bindEvents() {       
+    private bindEvents() {
         if (this.sys.game.device.os.desktop) {
             this.input.on('pointermove', function (pointer: any) {
                 let worldPosition = this.worldCamera.getWorldPoint(pointer.x, pointer.y);
@@ -35,8 +36,15 @@ export default class DebugScene extends SceneBase {
                     'Screen: ' + Math.round(pointer.x) + ', ' + Math.round(pointer.y),
                     'World: ' + Math.round(worldPosition.x) + ', ' + Math.round(worldPosition.y)
                 ]);
-            }, this);
-        }        
+            }, this); 
+        }   
+        // Tile Coordinates Listener
+        this.scene.get('ShipScene').events.on('tileCoordinates', 
+            function (coordinates: Phaser.Geom.Point) {
+                let currentText = [this.mouseText.text];
+                currentText.push('Tile: ' + coordinates.x + ', ' + coordinates.y);
+                this.mouseText.setText(currentText);
+        }, this); 
     }
 
     private drawStartingText() {
