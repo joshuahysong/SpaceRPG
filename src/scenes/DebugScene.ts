@@ -49,7 +49,7 @@ export default class DebugScene extends SceneBase {
         let bounds = this.worldCamera.getBounds();
         let targetWidth = bounds.width;
         let targetHeight = bounds.height;
-        this.drawLine(this.worldCamera.centerX, targetHeight / 2 * -1, this.worldCamera.centerX, targetHeight / 2, '#ff0000', 0.5);
-        this.drawLine(targetWidth / 2 * -1, this.worldCamera.centerY, targetWidth / 2, this.worldCamera.centerY, '#ff0000', 0.5);
+        this.drawLine(this.worldCamera.centerX, targetHeight / 2 * -1, this.worldCamera.centerX, targetHeight / 2, '#ff0000', 0.25);
+        this.drawLine(targetWidth / 2 * -1, this.worldCamera.centerY, targetWidth / 2, this.worldCamera.centerY, '#ff0000', 0.25);
     }
 }

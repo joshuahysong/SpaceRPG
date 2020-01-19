@@ -9,9 +9,9 @@ export default class ShipScene extends SceneBase {
     worldSize: integer = 200;
     oldPointerPosition: Phaser.Math.Vector2;
     debugObjects: Array<any>;
-    shipArray: Array<Array<integer>> = [[0,1,0,0,0,0,0,0,0,0,0,0],
-                                        [1,1,1,1,1,1,1,1,1,1,1,1],
-                                        [0,1,0,0,0,0,0,0,0,0,0,0]];
+    shipArray: Array<Array<integer>> = [[0,1,0,0,0,0,0],
+                                        [1,1,1,1,1,1,1],
+                                        [0,1,0,0,0,0,0]];
     
     public create() {
         this.bindEvents();
@@ -32,17 +32,23 @@ export default class ShipScene extends SceneBase {
         }
     }
 
-    private setupCameras() {  
+    private setupCameras() {
         this.cameras.main.setBounds(
             -1 * this.tileSize * this.worldSize / 2, 
             -1 * this.tileSize * this.worldSize / 2, 
             this.tileSize * this.worldSize,
             this.tileSize * this.worldSize);
-        this.cameras.main.centerOn(0, 0);
+        let offsetX = (this.shipArray[0].length * this.tileSize / 2);
+        let offsetY = (this.shipArray.length * this.tileSize / 2);
+        let centerX = (offsetX - (this.tileSize / 2)) % this.tileSize;
+        let centerY = (offsetY - (this.tileSize / 2)) % this.tileSize;
+        this.cameras.main.centerOn(centerX, centerY);
     }
 
     private bindEvents() {
+        // Mouse Wheel Zoom
         this.input.on('wheel', function(pointer: Phaser.Input.Pointer){
+            // TODO Zoom to Mouse Cursor (Like Google Maps)
             let oldZoom = this.cameras.main.zoom;
             let newZoom = this.cameras.main.zoom;
             if (pointer.deltaY < 0) {
@@ -55,6 +61,7 @@ export default class ShipScene extends SceneBase {
                 this.cameras.main.zoomTo(newZoom, 250);
             }
         }, this);
+        // Toggle Debug
         this.input.keyboard.on('keydown_F4', function () {
             this.isDebugging = !this.isDebugging;
             if (this.isDebugging) {
@@ -86,14 +93,16 @@ export default class ShipScene extends SceneBase {
         }
     }
 
-    private drawShip() {     
-        let offsetX: integer = this.shipArray[0].length * this.tileSize / 2;
-        let offsetY: integer = this.shipArray.length * this.tileSize / 2;
+    private drawShip() {
+        let offsetX = (this.shipArray[0].length * this.tileSize / 2);
+        let offsetY = (this.shipArray.length * this.tileSize / 2);
+        offsetX -= (offsetX - (this.tileSize / 2)) % this.tileSize;
+        offsetY -= (offsetY - (this.tileSize / 2)) % this.tileSize;
         for (let y = 0; y < this.shipArray.length; y++) {
             for (let x = 0; x < this.shipArray[y].length; x++){            
                 if (this.shipArray[y][x] === 1) {
                     let tile = this.add.image(x * this.tileSize + (this.tileSize / 2) - offsetX, 
-                        y * this.tileSize + (this.tileSize / 2)- offsetY, 'ship')
+                        y * this.tileSize + (this.tileSize / 2)- offsetY, 'ship').setOrigin(0.5)
                     tile.displayWidth = this.tileSize;
                     tile.scaleY = tile.scaleX;
                 };
