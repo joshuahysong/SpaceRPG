@@ -1,26 +1,23 @@
-import { Scene } from 'phaser'
+import { SceneBase } from './SceneBase';
 
-export default class DebugScene extends Scene {
+export default class DebugScene extends SceneBase {
     constructor() {
-        super({ key: 'DebugScene', active: true });
+        super({ key: 'DebugScene' });
     }
 
     worldCamera: Phaser.Cameras.Scene2D.Camera;
     cameraText: Phaser.GameObjects.Text;
     mouseText: Phaser.GameObjects.Text;
 
-    public preload() {        
-        //this.scene.sleep('DebugScene');
-    }
-
     public create() {
         this.worldCamera = this.scene.get('ShipScene').cameras.main;
         this.drawStartingText();
+        this.drawCameraCenter();
         this.bindEvents();
     }
 
     public update() {
-        let cameraBounds = this.worldCamera.getBounds()   ;  
+        let cameraBounds = this.worldCamera.getBounds();  
         this.cameraText.setText([
             '---- Camera ----',
             'Size: ' + cameraBounds.width + ', ' + cameraBounds.height,
@@ -46,5 +43,13 @@ export default class DebugScene extends Scene {
         let debugFont = { fontFamily: 'Monospace', fontSize: 12, color: '#ffffff' }
         this.cameraText = this.add.text(0, 0, ['Camera', 'Center: 0, 0', 'Zoom: 0'], debugFont);
         this.mouseText = this.add.text(200, 0, ['---- Mouse ----', 'Screen: 0, 0', 'World: 0, 0'], debugFont);
+    }
+
+    private drawCameraCenter() {
+        let bounds = this.worldCamera.getBounds();
+        let targetWidth = bounds.width;
+        let targetHeight = bounds.height;
+        this.drawLine(this.worldCamera.centerX, targetHeight / 2 * -1, this.worldCamera.centerX, targetHeight / 2, '#ff0000', 0.5);
+        this.drawLine(targetWidth / 2 * -1, this.worldCamera.centerY, targetWidth / 2, this.worldCamera.centerY, '#ff0000', 0.5);
     }
 }

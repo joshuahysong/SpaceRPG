@@ -1,7 +1,7 @@
-import { Scene } from 'phaser'
 import ship from './../assets/ship.png'
+import { SceneBase } from './SceneBase';
 
-export default class BootScene extends Scene {
+export default class BootScene extends SceneBase {
     constructor() {
         super({ key: 'BootScene' });
     }

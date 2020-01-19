@@ -1,22 +1,23 @@
-import { Scene, Game, Cameras } from 'phaser'
+import { SceneBase } from './SceneBase';
 
-export default class ShipScene extends Scene {
+export default class ShipScene extends SceneBase {
     constructor() {
         super({ key: 'ShipScene' })
     }
-  
+
     tileSize: integer = 20;
     worldSize: integer = 200;
     oldPointerPosition: Phaser.Math.Vector2;
-    shipArray: Array<Array<integer>> = [[0,1,0],
-                                        [1,1,1],
-                                        [0,1,0]];
-
+    debugObjects: Array<any>;
+    shipArray: Array<Array<integer>> = [[0,1,0,0,0,0,0,0,0,0,0,0],
+                                        [1,1,1,1,1,1,1,1,1,1,1,1],
+                                        [0,1,0,0,0,0,0,0,0,0,0,0]];
+    
     public create() {
-        this.setupCameras();
         this.bindEvents();
+        this.setupCameras();
         this.drawGrid();
-        this.drawShip();       
+        this.drawShip();
     }
 
     public update(time: number, delta: number) {
@@ -31,7 +32,7 @@ export default class ShipScene extends Scene {
         }
     }
 
-    private setupCameras() {        
+    private setupCameras() {  
         this.cameras.main.setBounds(
             -1 * this.tileSize * this.worldSize / 2, 
             -1 * this.tileSize * this.worldSize / 2, 
@@ -42,24 +43,30 @@ export default class ShipScene extends Scene {
 
     private bindEvents() {
         this.input.on('wheel', function(pointer: Phaser.Input.Pointer){
-            // TODO Zoom to cursor
             let oldZoom = this.cameras.main.zoom;
             let newZoom = this.cameras.main.zoom;
             if (pointer.deltaY < 0) {
-                newZoom += 0.2;
+                newZoom += newZoom * 0.5;
             } else {
-                newZoom -= 0.2;
+                newZoom -= newZoom * 0.5;
             }
             newZoom = newZoom > 3 ? 3 : newZoom < 0.5 ? 0.5 : newZoom;
             if (oldZoom !== newZoom) {
-                this.cameras.main.zoomTo(newZoom, 0);
+                this.cameras.main.zoomTo(newZoom, 250);
             }
         }, this);
         this.input.keyboard.on('keydown_F4', function () {
-            if (this.scene.isSleeping('DebugScene')) {
-                this.scene.wake('DebugScene');
+            this.isDebugging = !this.isDebugging;
+            if (this.isDebugging) {
+                this.drawDebug();
+                this.scene.run('DebugScene');
             } else {
-                this.scene.sleep('DebugScene');
+                if (this.debugObjects) {
+                    for (var i = 0; i < this.debugObjects.length; i++) {
+                        this.debugObjects[i].destroy();
+                    }
+                }
+                this.scene.stop('DebugScene');
             }
         }, this);
     }
@@ -72,13 +79,8 @@ export default class ShipScene extends Scene {
         let currentX = (Math.floor((targetWidth / 2) / this.tileSize) * this.tileSize * -1) - this.tileSize / 2;
         let currentY = (Math.floor((targetHeight / 2) / this.tileSize) * this.tileSize * -1) - this.tileSize / 2;
         while (currentX < (targetWidth / 2)) {
-            let graphics = this.add.graphics();
-            var thickness = 1;
-            var color = 16777215;
-            var alpha = 0.1;
-            graphics.lineStyle(thickness, color, alpha);
-            graphics.lineBetween(currentX, targetHeight / 2 * -1, currentX, targetHeight / 2);
-            graphics.lineBetween(targetWidth / 2 * -1, currentY, targetWidth / 2, currentY);
+            this.drawLine(currentX, targetHeight / 2 * -1, currentX, targetHeight / 2, '#ffffff', 0.1);
+            this.drawLine(targetWidth / 2 * -1, currentY, targetWidth / 2, currentY, '#ffffff', 0.1);
             currentY += this.tileSize;
             currentX += this.tileSize;
         }
@@ -97,5 +99,14 @@ export default class ShipScene extends Scene {
                 };
             }
         }
+    }
+
+    private drawDebug() {
+        this.debugObjects = [];
+        let bounds = this.cameras.main.getBounds();
+        let targetWidth = bounds.width;
+        let targetHeight = bounds.height;
+        this.debugObjects.push(this.drawLine(0, targetHeight / 2 * -1, 0, targetHeight / 2, '#0000ff', 0.5));
+        this.debugObjects.push(this.drawLine(targetWidth / 2 * -1, 0, targetWidth / 2, 0, '#0000ff', 0.5));
     }
 }
