@@ -33,7 +33,7 @@ export default class DebugScene extends SceneBase {
             'Center: ' + Math.round(this.worldCamera.worldView.centerX) + ', ' + Math.round(this.worldCamera.worldView.centerY),
             'Zoom: ' + this.worldCamera.zoom.toFixed(2)
         ]);
-        if (this.sys.game.device.os.desktop) {
+        if (!Config.isMobile) {
             let worldPosition = this.worldCamera.getWorldPoint(this.input.activePointer.x, this.input.activePointer.y);
             let mouseTextContent = [
                 '---- Mouse ----',
@@ -45,24 +45,25 @@ export default class DebugScene extends SceneBase {
             }
             this.mouseText.setText(mouseTextContent);
         }
-        if (!this.sys.game.device.os.desktop) {
+        if (Config.isMobile) {
             if (this.pointerText) {
                 this.pointerText.destroy();
             }
             let pointerTextContent = ['---- Pointers ----']
             if (this.input.activePointer.isDown) {
-                pointerTextContent.push('activePointer: ' + this.input.activePointer.position.x + ', ' + this.input.activePointer.position.y);
+                pointerTextContent.push('activePointer: ' +
+                    Math.round(this.input.activePointer.position.x) + ', ' +
+                    Math.round(this.input.activePointer.position.y));
             }
             if (this.input.pointer1.isDown) {
-                pointerTextContent.push('pointer1: ' + this.input.pointer1.position.x + ', ' + this.input.pointer1.position.y);
+                pointerTextContent.push('pointer1: ' +
+                    Math.round(this.input.pointer1.position.x) + ', ' +
+                    Math.round(this.input.pointer1.position.y));
             }
             if (this.input.pointer2.isDown) {
-                pointerTextContent.push('pointer2: ' + this.input.pointer2.position.x + ', ' + this.input.pointer2.position.y);
-            }
-            if (this.input.pointer1.isDown && this.input.pointer2.isDown) {
-                let deltaX = Phaser.Math.Distance.BetweenPoints(this.input.pointer1.position, this.input.pointer2.position);
-                pointerTextContent.push('delta: ' + Math.round(deltaX));
-
+                pointerTextContent.push('pointer2: ' +
+                    Math.round(this.input.pointer2.position.x) + ', ' +
+                    Math.round(this.input.pointer2.position.y));
             }
             this.pointerText = this.add.text(200, 0, pointerTextContent, this.debugFont);
         }
@@ -77,7 +78,7 @@ export default class DebugScene extends SceneBase {
 
     private drawStartingText() {
         this.cameraText = this.add.text(0, 0, ['Camera', 'Center: 0, 0', 'Zoom: 0'], this.debugFont);
-        if (this.sys.game.device.os.desktop) {
+        if (!Config.isMobile) {
             this.mouseText = this.add.text(200, 0, ['---- Mouse ----', 'Screen: 0, 0', 'World: 0, 0', 'Tile: 0, 0'], this.debugFont);
         } else {
             this.pointerText = this.add.text(200, 0, '---- Pointer ----', this.debugFont);

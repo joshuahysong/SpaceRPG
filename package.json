@@ -11,6 +11,7 @@
     "phaser": "^3.21.0"
   },
   "devDependencies": {
-    "@phaser-cli/scripts": "^2.0.0"
+    "@phaser-cli/scripts": "^2.0.0",
+    "phaser3-rex-plugins": "^1.1.7"
   }
 }

@@ -15,4 +15,7 @@ export class SceneBase extends Phaser.Scene {
             graphics.lineBetween(x1, y1, x2, y2);
             return graphics;
     }
+    public betweenPoints(p1: Phaser.Geom.Point, p2: Phaser.Geom.Point) {
+        return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p2.y, 2))
+    }
 }

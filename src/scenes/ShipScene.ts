@@ -8,12 +8,13 @@ export default class ShipScene extends SceneBase {
     }
 
     private oldPointerPosition: Phaser.Math.Vector2;
-    private oldPointer2Position: Phaser.Math.Vector2;
+    private pinch: any;
+    private pinchZoom: number = 1;
     private debugObjects: Array<any>;
     private shipArray: Array<Array<integer>> = [[0,1,0,0,0,0,0],
                                                 [1,1,1,1,1,1,1],
                                                 [0,1,0,0,0,0,0]];
-    
+
     public create() {
         this.bindEvents();
         this.setupCameras();
@@ -26,7 +27,9 @@ export default class ShipScene extends SceneBase {
     }
 
     public update(time: number, delta: number) {
-        if(this.input.activePointer.isDown){
+        // Drag and move map
+        if((this.input.activePointer.isDown && !Config.isMobile)
+            || (this.input.pointer1.isDown && Config.isMobile && !this.input.pointer2.isDown)){
             if (this.oldPointerPosition) {
                 this.cameras.main.scrollX += (this.oldPointerPosition.x - this.input.activePointer.position.x) / this.cameras.main.zoom;
                 this.cameras.main.scrollY += (this.oldPointerPosition.y - this.input.activePointer.position.y) / this.cameras.main.zoom;
@@ -34,15 +37,6 @@ export default class ShipScene extends SceneBase {
             this.oldPointerPosition = this.input.activePointer.position.clone();
         } else {
             this.oldPointerPosition = null;
-        }
-        if (this.input.pointer1.isDown && this.input.pointer2.isDown) {
-            if (this.oldPointerPosition && this.oldPointer2Position) {
-                let deltaOld = Phaser.Math.Distance.BetweenPoints(this.oldPointerPosition, this.oldPointer2Position);
-                let deltaNew = Phaser.Math.Distance.BetweenPoints(this.input.pointer1.position, this.input.pointer2.position);
-                this.zoomCamera(deltaOld - deltaNew);
-            }
-            this.oldPointerPosition = this.input.pointer1.position;
-            this.oldPointer2Position = this.input.pointer2.position;
         }
     }
 
@@ -60,9 +54,33 @@ export default class ShipScene extends SceneBase {
     }
 
     private bindEvents() {
-        // Mouse Wheel Zoom
-        this.input.on('wheel', function(pointer: Phaser.Input.Pointer){
-            this.zoomCamera(pointer.deltaY);
+        // This unneeded pinchScene variable is done becuase intellisense does not find rexGestures
+        let pinchScene: any = this;
+        this.pinch = pinchScene.rexGestures.add.pinch();
+        this.pinch.enable;
+        // Zoom events
+        let zoomInStop = 2;
+        let zoomOutStop = 0.25; 
+        //      Pinch Zoom
+        this.pinch.on('pinch', function(pinch: any) {
+            this.pinchZoom *= pinch.scaleFactor;
+            this.pinchZoom = this.pinchZoom > zoomInStop ? zoomInStop : this.pinchZoom < zoomOutStop ? zoomOutStop : this.pinchZoom;
+            this.cameras.main.zoomTo(this.pinchZoom, 0);
+        }, this);
+        //      Mouse Wheel Zoom
+        this.input.on('wheel', function(pointer: Phaser.Input.Pointer){            
+            let oldZoom = this.cameras.main.zoom;
+            let newZoom = this.cameras.main.zoom;
+            let zoomRate = 0.5;
+            if (pointer.deltaY < 0) {
+                newZoom += newZoom * zoomRate;
+            } else if (pointer.deltaY > 0) {
+                newZoom -= newZoom * zoomRate;
+            }
+            newZoom = newZoom > zoomInStop ? zoomInStop : newZoom < zoomOutStop ? zoomOutStop : newZoom;
+            if (oldZoom !== newZoom) {
+                this.cameras.main.zoomTo(newZoom, 0);
+            }
         }, this);
         // Toggle Debug
         this.input.keyboard.on('keydown_F4', function () {
@@ -80,7 +98,7 @@ export default class ShipScene extends SceneBase {
             }
         }, this);
         // Tile Coordinates
-        if (this.sys.game.device.os.desktop) {
+        if (!Config.isMobile) {
             this.input.on('pointermove', function (pointer: any) {
                 let worldPoint = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
                 this.events.emit('tileCoordinates', this.getTileCoordinates(worldPoint.x, worldPoint.y));
@@ -133,20 +151,5 @@ export default class ShipScene extends SceneBase {
     private getTileCoordinates(x: number, y: number): Phaser.Geom.Point {   
         let offset = Constants.tileSize / 2;  
         return new Phaser.Geom.Point(Math.floor((x + offset) / Constants.tileSize), Math.floor((y + offset) / Constants.tileSize))
-    }
-
-    private zoomCamera(delta: number) {
-        // TODO Zoom to Mouse Cursor (Like Google Maps)
-        let oldZoom = this.cameras.main.zoom;
-        let newZoom = this.cameras.main.zoom;
-        if (delta < 0) {
-            newZoom += newZoom * 0.5;
-        } else {
-            newZoom -= newZoom * 0.5;
-        }
-        newZoom = newZoom > 2 ? 2 : newZoom < 0.25 ? 0.25 : newZoom;
-        if (oldZoom !== newZoom) {
-            this.cameras.main.zoomTo(newZoom, 250);
-        }
     }
 }

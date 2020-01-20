@@ -1,4 +1,5 @@
 import * as Phaser from 'phaser'
+import GesturesPlugin from './plugins/gestures-plugin.js';
 import BootScene from './scenes/BootScene'
 import ShipScene from './scenes/ShipScene'
 import DebugScene from './scenes/DebugScene'
@@ -19,6 +20,13 @@ const config: Phaser.Types.Core.GameConfig = {
         mode: Phaser.Scale.RESIZE,
         autoCenter: Phaser.Scale.CENTER_BOTH,
     },
+    plugins: {
+        scene: [{
+            key: 'rexGestures',
+            plugin: GesturesPlugin,
+            mapping: 'rexGestures'
+        }]
+    }
 }
 
 const game = new Phaser.Game(config)
