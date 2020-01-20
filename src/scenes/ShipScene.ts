@@ -1,4 +1,5 @@
 import { SceneBase } from './SceneBase';
+import { Config } from './../config';
 
 export default class ShipScene extends SceneBase {
     constructor() {
@@ -18,6 +19,10 @@ export default class ShipScene extends SceneBase {
         this.setupCameras();
         this.drawGrid();
         this.drawShip();
+        if (Config.isDebugging) {
+            this.drawDebug();
+            this.scene.run('DebugScene');
+        }
     }
 
     public update(time: number, delta: number) {
@@ -56,15 +61,15 @@ export default class ShipScene extends SceneBase {
             } else {
                 newZoom -= newZoom * 0.5;
             }
-            newZoom = newZoom > 3 ? 3 : newZoom < 0.5 ? 0.5 : newZoom;
+            newZoom = newZoom > 2 ? 2 : newZoom < 0.25 ? 0.25 : newZoom;
             if (oldZoom !== newZoom) {
                 this.cameras.main.zoomTo(newZoom, 250);
             }
         }, this);
         // Toggle Debug
         this.input.keyboard.on('keydown_F4', function () {
-            this.isDebugging = !this.isDebugging;
-            if (this.isDebugging) {
+            Config.isDebugging = !Config.isDebugging;
+            if (Config.isDebugging) {
                 this.drawDebug();
                 this.scene.run('DebugScene');
             } else {
@@ -76,7 +81,7 @@ export default class ShipScene extends SceneBase {
                 this.scene.stop('DebugScene');
             }
         }, this);
-
+        // Tile Coordinates
         if (this.sys.game.device.os.desktop) {
             this.input.on('pointermove', function (pointer: any) {
                 let worldPoint = this.cameras.main.getWorldPoint(pointer.x, pointer.y);

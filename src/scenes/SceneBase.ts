@@ -1,7 +1,4 @@
 export class SceneBase extends Phaser.Scene {
-
-    isDebugging: boolean;
-
     public drawLine(x1: number, 
         y1: number, 
         x2: number, 
