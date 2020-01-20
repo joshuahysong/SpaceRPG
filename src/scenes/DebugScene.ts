@@ -6,12 +6,15 @@ export default class DebugScene extends SceneBase {
         super({ key: 'DebugScene' });
     }
 
-    worldCamera: Phaser.Cameras.Scene2D.Camera;
-    cameraText: Phaser.GameObjects.Text;
-    mouseText: Phaser.GameObjects.Text;
-    pointerText: Phaser.GameObjects.Text;
-    debugFont: object = { fontFamily: 'Monospace', fontSize: 12, color: '#ffffff' };
-    tileCoordinates: Phaser.Geom.Point;
+    private worldCamera: Phaser.Cameras.Scene2D.Camera;
+    private cameraText: Phaser.GameObjects.Text;
+    private mouseText: Phaser.GameObjects.Text;
+    private pointerText: Phaser.GameObjects.Text;
+    private debugFont: object = { fontFamily: 'Monospace', fontSize: 12, color: '#ffffff' };
+    private tileCoordinates: Phaser.Geom.Point;
+
+    private oldPointerPosition: Phaser.Math.Vector2;
+    private oldPointer2Position: Phaser.Math.Vector2;
 
     public create() {
         this.worldCamera = this.scene.get('ShipScene').cameras.main;
@@ -48,16 +51,18 @@ export default class DebugScene extends SceneBase {
             }
             let pointerTextContent = ['---- Pointers ----']
             if (this.input.activePointer.isDown) {
-                pointerTextContent.push('activePointer');
-            }
-            if (this.input.mousePointer.isDown) {
-                pointerTextContent.push('mousePointer');
+                pointerTextContent.push('activePointer: ' + this.input.activePointer.position.x + ', ' + this.input.activePointer.position.y);
             }
             if (this.input.pointer1.isDown) {
-                pointerTextContent.push('pointer1');
+                pointerTextContent.push('pointer1: ' + this.input.pointer1.position.x + ', ' + this.input.pointer1.position.y);
             }
             if (this.input.pointer2.isDown) {
-                pointerTextContent.push('pointer2');
+                pointerTextContent.push('pointer2: ' + this.input.pointer2.position.x + ', ' + this.input.pointer2.position.y);
+            }
+            if (this.input.pointer1.isDown && this.input.pointer2.isDown) {
+                let deltaX = Phaser.Math.Distance.BetweenPoints(this.input.pointer1.position, this.input.pointer2.position);
+                pointerTextContent.push('delta: ' + Math.round(deltaX));
+
             }
             this.pointerText = this.add.text(200, 0, pointerTextContent, this.debugFont);
         }
