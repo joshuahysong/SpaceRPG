@@ -1,6 +1,6 @@
 import { Config } from './../config';
 import { SceneBase } from './SceneBase';
-import ship from './../assets/ship.png'
+import shipTiles from './../assets/shipTiles.png'
 
 export default class BootScene extends SceneBase {
     constructor() {
@@ -9,7 +9,7 @@ export default class BootScene extends SceneBase {
 
     public preload() {
         Config.isMobile = !this.sys.game.device.os.desktop;
-        this.load.image('ship', ship);
+        this.load.spritesheet('shipTiles', shipTiles, { frameWidth: 64, frameHeight: 64 });    
     }
 
     public create() {

@@ -130,7 +130,7 @@ export default class ShipScene extends SceneBase {
             for (let x = 0; x < this.shipArray[y].length; x++){            
                 if (this.shipArray[y][x] === 1) {
                     let tile = this.add.image(x * Constants.tileSize + (Constants.tileSize / 2) - offsetX, 
-                        y * Constants.tileSize + (Constants.tileSize / 2)- offsetY, 'ship').setOrigin(0.5)
+                        y * Constants.tileSize + (Constants.tileSize / 2)- offsetY, 'shipTiles', 0).setOrigin(0.5)
                     tile.displayWidth = Constants.tileSize;
                     tile.scaleY = tile.scaleX;
                 };
