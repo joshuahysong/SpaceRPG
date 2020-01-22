@@ -1,6 +1,7 @@
 import { SceneBase } from './SceneBase';
 import { Config } from './../config';
 import { Constants } from './../constants'
+import { Tilemaps } from 'phaser';
 
 export default class ShipScene extends SceneBase {
     constructor() {
@@ -11,6 +12,8 @@ export default class ShipScene extends SceneBase {
     private pinch: any;
     private pinchZoom: number = 1;
     private debugObjects: Array<any>;
+    private isBuilding: boolean = false;
+    private buildingBlock: any;
     private shipArray: Array<Array<integer>> = [[0,1,0,0,0,0,0],
                                                 [1,1,1,1,1,1,1],
                                                 [0,1,0,0,0,0,0]];
@@ -24,6 +27,7 @@ export default class ShipScene extends SceneBase {
             this.drawDebug();
             this.scene.run('DebugScene');
         }
+        this.scene.run('HudScene');
     }
 
     public update(time: number, delta: number) {
@@ -103,7 +107,44 @@ export default class ShipScene extends SceneBase {
                 let worldPoint = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
                 this.events.emit('tileCoordinates', this.getTileCoordinates(worldPoint.x, worldPoint.y));
             }, this);
-        }     
+        }
+        // Building tiles
+        this.scene.get('HudScene').events.on('buildButton', 
+            function () {
+                console.log('hey');
+                this.isBuilding = true;
+        }, this); 
+        this.input.on('pointermove', function (pointer: any) {
+            if (this.isBuilding) {
+                let worldPoint = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
+                let tileCoordinates = this.getTileCoordinates(worldPoint.x, worldPoint.y);
+                if (this.buildingBlock) {
+                    this.buildingBlock.x = tileCoordinates.x * Constants.tileSize;
+                    this.buildingBlock.y = tileCoordinates.y * Constants.tileSize
+                } else {
+                    this.buildingBlock = this.add.image(tileCoordinates.x * Constants.tileSize, 
+                        tileCoordinates.y * Constants.tileSize, 'shipTiles', 0).setOrigin(0.5)
+                    this.buildingBlock.displayWidth = Constants.tileSize;
+                    this.buildingBlock.scaleY = this.buildingBlock.scaleX;
+                    this.buildingBlock.alpha = 0.5;
+                }
+            }
+        }, this);
+        this.input.on('pointerdown', function(pointer: any) {
+            if (this.isBuilding && this.buildingBlock) {
+                let newTileConfig = {
+                    key: this.buildingBlock.texture.key,
+                    x: this.buildingBlock.x,
+                    y: this.buildingBlock.y,
+                    frame: this.buildingBlock.frame.name,
+                    scale: this.buildingBlock.scale
+                }
+                this.make.sprite(newTileConfig);
+                this.buildingBlock.destroy();
+                this.buildingBlock = null;
+                this.isBuilding = false;
+            }
+        }, this)
     }
 
     private drawGrid() {
