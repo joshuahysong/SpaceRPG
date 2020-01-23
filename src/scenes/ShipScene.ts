@@ -1,7 +1,7 @@
 import { SceneBase } from './SceneBase';
 import { Config } from './../config';
 import { Constants } from './../constants'
-import { Tilemaps } from 'phaser';
+import { Tile } from './../Tile'
 
 export default class ShipScene extends SceneBase {
     constructor() {
@@ -13,10 +13,12 @@ export default class ShipScene extends SceneBase {
     private pinchZoom: number = 1;
     private debugObjects: Array<any>;
     private isBuilding: boolean = false;
-    private buildingBlock: any;
+    private isBuildingTileAllowed: boolean = false;
+    private buildingTile: Tile;
     private shipArray: Array<Array<integer>> = [[0,1,0,0,0,0,0],
                                                 [1,1,1,1,1,1,1],
                                                 [0,1,0,0,0,0,0]];
+    private ship: Array<Tile>;
 
     public create() {
         this.bindEvents();
@@ -108,40 +110,51 @@ export default class ShipScene extends SceneBase {
                 this.events.emit('tileCoordinates', this.getTileCoordinates(worldPoint.x, worldPoint.y));
             }, this);
         }
-        // Building tiles
+        this.bindTileEvents();
+    }
+
+    private bindTileEvents() {
         this.scene.get('HudScene').events.on('buildButton', 
             function () {
-                console.log('hey');
                 this.isBuilding = true;
         }, this); 
         this.input.on('pointermove', function (pointer: any) {
             if (this.isBuilding) {
                 let worldPoint = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
                 let tileCoordinates = this.getTileCoordinates(worldPoint.x, worldPoint.y);
-                if (this.buildingBlock) {
-                    this.buildingBlock.x = tileCoordinates.x * Constants.tileSize;
-                    this.buildingBlock.y = tileCoordinates.y * Constants.tileSize
+                if (this.buildingTile) {
+                    this.buildingTile.x = tileCoordinates.x * Constants.tileSize;
+                    this.buildingTile.y = tileCoordinates.y * Constants.tileSize;
+                    if (this.ship.filter((s: Tile) => s.location.x === tileCoordinates.x 
+                        && s.location.y === tileCoordinates.y).length > 0) {
+                        this.isBuildingTileAllowed = false;
+                        this.buildingTile.tint = Phaser.Display.Color.HexStringToColor('#ff0000').color;
+                    } else {
+                        this.isBuildingTileAllowed = true;
+                        this.buildingTile.tint = Phaser.Display.Color.HexStringToColor('#33cc33').color;
+                    }
                 } else {
-                    this.buildingBlock = this.add.image(tileCoordinates.x * Constants.tileSize, 
-                        tileCoordinates.y * Constants.tileSize, 'shipTiles', 0).setOrigin(0.5)
-                    this.buildingBlock.displayWidth = Constants.tileSize;
-                    this.buildingBlock.scaleY = this.buildingBlock.scaleX;
-                    this.buildingBlock.alpha = 0.5;
+                    this.buildingTile = new Tile(this, tileCoordinates.x * Constants.tileSize, 
+                        tileCoordinates.y * Constants.tileSize, 'shipTiles', 0)
+                    this.buildingTile.setOrigin(0.5)
+                    this.buildingTile.displayWidth = Constants.tileSize;
+                    this.buildingTile.scaleY = this.buildingTile.scaleX;
+                    this.buildingTile.alpha = 0.5;
+                    this.add.existing(this.buildingTile);
                 }
             }
         }, this);
         this.input.on('pointerdown', function(pointer: any) {
-            if (this.isBuilding && this.buildingBlock) {
-                let newTileConfig = {
-                    key: this.buildingBlock.texture.key,
-                    x: this.buildingBlock.x,
-                    y: this.buildingBlock.y,
-                    frame: this.buildingBlock.frame.name,
-                    scale: this.buildingBlock.scale
-                }
-                this.make.sprite(newTileConfig);
-                this.buildingBlock.destroy();
-                this.buildingBlock = null;
+            if (this.isBuilding && this.buildingTile && this.isBuildingTileAllowed) {
+                let newTile = new Tile(this, 
+                    this.buildingTile.x,
+                    this.buildingTile.y,
+                    this.buildingTile.texture.key,
+                    this.buildingTile.frame.name)
+                newTile.scale = this.buildingTile.scale;
+                this.add.existing(newTile);
+                this.buildingTile.destroy();
+                this.buildingTile = null;
                 this.isBuilding = false;
             }
         }, this)
@@ -163,6 +176,7 @@ export default class ShipScene extends SceneBase {
     }
 
     private drawShip() {
+        this.ship = [];
         let offsetX = (this.shipArray[0].length * Constants.tileSize / 2);
         let offsetY = (this.shipArray.length * Constants.tileSize / 2);
         offsetX -= (offsetX - (Constants.tileSize / 2)) % Constants.tileSize;
@@ -170,10 +184,15 @@ export default class ShipScene extends SceneBase {
         for (let y = 0; y < this.shipArray.length; y++) {
             for (let x = 0; x < this.shipArray[y].length; x++){            
                 if (this.shipArray[y][x] === 1) {
-                    let tile = this.add.image(x * Constants.tileSize + (Constants.tileSize / 2) - offsetX, 
-                        y * Constants.tileSize + (Constants.tileSize / 2)- offsetY, 'shipTiles', 0).setOrigin(0.5)
+                    let worldX = x * Constants.tileSize + (Constants.tileSize / 2) - offsetX;
+                    let worldY = y * Constants.tileSize + (Constants.tileSize / 2) - offsetY
+                    let tile = new Tile(this, worldX, worldY, 'shipTiles', 0);
+                    tile.setOrigin(0.5);
                     tile.displayWidth = Constants.tileSize;
                     tile.scaleY = tile.scaleX;
+                    tile.location = new Phaser.Geom.Point(worldX / Constants.tileSize, worldY / Constants.tileSize);
+                    this.add.existing(tile);
+                    this.ship.push(tile);
                 };
             }
         }
@@ -192,5 +211,9 @@ export default class ShipScene extends SceneBase {
     private getTileCoordinates(x: number, y: number): Phaser.Geom.Point {   
         let offset = Constants.tileSize / 2;  
         return new Phaser.Geom.Point(Math.floor((x + offset) / Constants.tileSize), Math.floor((y + offset) / Constants.tileSize))
+    }
+
+    private getTileNeighbors(x: number, y: number) {
+        
     }
 }
