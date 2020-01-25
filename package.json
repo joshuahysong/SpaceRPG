@@ -7,10 +7,10 @@
     "build": "node scripts/build"
   },
   "dependencies": {
-    "phaser": "^3.21.0"
+    "phaser": "^3.21.0",
+    "phaser3-rex-plugins": "^1.1.7"
   },
   "devDependencies": {
-    "phaser3-rex-plugins": "^1.1.7",
     "chalk": "^2.3.2",
     "clean-webpack-plugin": "^0.1.19",
     "copy-webpack-plugin": "^4.5.1",

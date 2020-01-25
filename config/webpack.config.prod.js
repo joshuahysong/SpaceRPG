@@ -19,7 +19,7 @@ const htmlPluginOptions = {
 }
 
 // Clean webpack plugin
-const pathsToClean = ['build']
+const pathsToClean = ['docs']
 const cleanOptions = {
   root: paths.appPath,
 }

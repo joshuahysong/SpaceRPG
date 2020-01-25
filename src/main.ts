@@ -1,5 +1,5 @@
 import * as Phaser from 'phaser'
-import GesturesPlugin from './plugins/gestures-plugin.js';
+import GesturesPlugin from 'phaser3-rex-plugins/plugins/gestures-plugin.js'
 import BootScene from './scenes/BootScene'
 import ShipScene from './scenes/ShipScene'
 import DebugScene from './scenes/DebugScene'
