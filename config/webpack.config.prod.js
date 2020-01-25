@@ -74,7 +74,7 @@ module.exports = {
       },
       {
         loader: 'file-loader',
-        test: [/\.(png|jpg|gif|svg|xml|ogg|mp3|wav|json)$/],
+        test: [/\.(png|jpg|gif|svg|xml|ogg|mp3|wav)$/],
         options: {
           name: 'assets/[name].[hash:8].[ext]',
         },

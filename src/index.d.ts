@@ -16,6 +16,7 @@ declare module '*.ttf'
 declare module '*.xml'
 declare module '*.vert'
 declare module '*.frag'
+declare module '*.json'
 
 // Rex Plugins
 declare module 'phaser3-rex-plugins/plugins/gestures-plugin.js'
