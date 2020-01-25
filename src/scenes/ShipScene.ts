@@ -12,6 +12,7 @@ export default class ShipScene extends SceneBase {
     private pinch: any;
     private pinchZoom: number = 1;
     private debugObjects: Array<any>;
+    private isHudPointerDown: boolean = false;
     private isBuilding: boolean = false;
     private isBuildingTileAllowed: boolean = false;
     private buildingTile: Tile;
@@ -21,7 +22,10 @@ export default class ShipScene extends SceneBase {
     private ship: Array<Tile>;
 
     public create() {
-        this.bindEvents();
+        this.bindDebugEvents();
+        this.bindCameraEvents();
+        this.bindHudEvents();
+        this.bindTileEvents();
         this.setupCameras();
         this.drawGrid();
         this.drawShip();
@@ -30,12 +34,14 @@ export default class ShipScene extends SceneBase {
             this.scene.run('DebugScene');
         }
         this.scene.run('HudScene');
+        console.log(this.cache.json.get('testjson'))
     }
 
     public update(time: number, delta: number) {
         // Drag and move map
-        if((this.input.activePointer.isDown && !Config.isMobile)
+        if(!this.isHudPointerDown && (this.input.activePointer.primaryDown && !Config.isMobile)
             || (this.input.pointer1.isDown && Config.isMobile && !this.input.pointer2.isDown)){
+
             if (this.oldPointerPosition) {
                 this.cameras.main.scrollX += (this.oldPointerPosition.x - this.input.activePointer.position.x) / this.cameras.main.zoom;
                 this.cameras.main.scrollY += (this.oldPointerPosition.y - this.input.activePointer.position.y) / this.cameras.main.zoom;
@@ -59,7 +65,28 @@ export default class ShipScene extends SceneBase {
         this.cameras.main.centerOn(centerX, centerY);
     }
 
-    private bindEvents() {
+    private bindDebugEvents() {
+        // Toggle Debug
+        this.input.keyboard.on('keydown_F4', function () {
+            Config.isDebugging = !Config.isDebugging;
+            if (Config.isDebugging) {
+                this.drawDebug();
+                this.scene.run('DebugScene');
+            } else {
+                this.destroyDebug();
+                this.scene.stop('DebugScene');
+            }
+        }, this);
+        // Tile Coordinates
+        if (!Config.isMobile) {
+            this.input.on('pointermove', function (pointer: any) {
+                let worldPoint = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
+                this.events.emit('tileCoordinates', this.getTileCoordinates(worldPoint.x, worldPoint.y));
+            }, this);
+        }
+    }
+
+    private bindCameraEvents() {
         // This unneeded pinchScene variable is done becuase intellisense does not find rexGestures
         let pinchScene: any = this;
         this.pinch = pinchScene.rexGestures.add.pinch();
@@ -77,47 +104,35 @@ export default class ShipScene extends SceneBase {
         this.input.on('wheel', function(pointer: Phaser.Input.Pointer){            
             let oldZoom = this.cameras.main.zoom;
             let newZoom = this.cameras.main.zoom;
-            let zoomRate = 0.5;
             if (pointer.deltaY < 0) {
-                newZoom += newZoom * zoomRate;
+                newZoom += oldZoom < 1 ? 0.25 : 0.5;
             } else if (pointer.deltaY > 0) {
-                newZoom -= newZoom * zoomRate;
+                newZoom -= oldZoom <= 1 ? 0.25 : 0.5;
             }
             newZoom = newZoom > zoomInStop ? zoomInStop : newZoom < zoomOutStop ? zoomOutStop : newZoom;
             if (oldZoom !== newZoom) {
-                this.cameras.main.zoomTo(newZoom, 0);
+                this.cameras.main.zoomTo(newZoom, 150);
             }
         }, this);
-        // Toggle Debug
-        this.input.keyboard.on('keydown_F4', function () {
-            Config.isDebugging = !Config.isDebugging;
-            if (Config.isDebugging) {
-                this.drawDebug();
-                this.scene.run('DebugScene');
-            } else {
-                if (this.debugObjects) {
-                    for (var i = 0; i < this.debugObjects.length; i++) {
-                        this.debugObjects[i].destroy();
-                    }
-                }
-                this.scene.stop('DebugScene');
-            }
-        }, this);
-        // Tile Coordinates
-        if (!Config.isMobile) {
-            this.input.on('pointermove', function (pointer: any) {
-                let worldPoint = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
-                this.events.emit('tileCoordinates', this.getTileCoordinates(worldPoint.x, worldPoint.y));
-            }, this);
-        }
-        this.bindTileEvents();
     }
 
-    private bindTileEvents() {
-        this.scene.get('HudScene').events.on('buildButton', 
+    private bindHudEvents() {
+        // Hud Events
+        var hudScene = this.scene.get('HudScene');
+        hudScene.events.on('hudPointerDown', 
+            function (isHudPointerDown: boolean) {
+                this.isHudPointerDown = isHudPointerDown;
+        }, this); 
+        hudScene.events.on('buildButton', 
             function () {
                 this.isBuilding = true;
         }, this); 
+        this.input.on('pointerup', function() {
+            this.isHudPointerDown = false;
+        }, this)
+    }
+
+    private bindTileEvents() {
         this.input.on('pointermove', function (pointer: any) {
             if (this.isBuilding) {
                 let worldPoint = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
@@ -156,6 +171,10 @@ export default class ShipScene extends SceneBase {
                 this.buildingTile.destroy();
                 this.buildingTile = null;
                 this.isBuilding = false;
+                if (Config.isDebugging) {
+                    this.destroyDebug();
+                    this.drawDebug();
+                }
             }
         }, this)
     }
@@ -206,6 +225,15 @@ export default class ShipScene extends SceneBase {
         let targetHeight = bounds.height;
         this.debugObjects.push(this.drawLine(0, targetHeight / 2 * -1, 0, targetHeight / 2, '#0000ff', 0.5));
         this.debugObjects.push(this.drawLine(targetWidth / 2 * -1, 0, targetWidth / 2, 0, '#0000ff', 0.5));
+    }
+
+    private destroyDebug() {        
+        if (this.debugObjects) {
+            for (var i = 0; i < this.debugObjects.length; i++) {
+                this.debugObjects[i].destroy();
+            }
+            this.debugObjects = null;
+        }
     }
 
     private getTileCoordinates(x: number, y: number): Phaser.Geom.Point {   

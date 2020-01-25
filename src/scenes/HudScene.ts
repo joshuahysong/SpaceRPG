@@ -6,6 +6,8 @@ export default class HudScene extends SceneBase {
         super({ key: 'HudScene' });
     }
 
+    public elementIsHovered: boolean = false;
+
     private buttonFont: object = { fontFamily: 'Arial', fontSize: 16, color: '#ffffff' };
 
     public create() {
@@ -21,6 +23,10 @@ export default class HudScene extends SceneBase {
         container.setInteractive({ cursor: 'pointer' });
         container.on('pointerdown', function() {
             this.events.emit('buildButton');
+            this.events.emit('hudPointerDown', true);
+        }, this)
+        container.on('pointerup', function() {
+            this.events.emit('hudPointerDown', false);
         }, this)
     }
 }

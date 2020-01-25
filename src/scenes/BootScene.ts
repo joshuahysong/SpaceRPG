@@ -1,6 +1,5 @@
 import { Config } from './../config';
 import { SceneBase } from './SceneBase';
-import * as test from './../importAssets/tiles.json'
 
 export default class BootScene extends SceneBase {
     constructor() {
@@ -9,9 +8,9 @@ export default class BootScene extends SceneBase {
 
     public preload() {
         Config.isMobile = !this.sys.game.device.os.desktop;
-        console.log(test);
         this.load.setBaseURL('./../assets/');
-        this.load.multiatlas('shipTiles', 'shipTiles.json', '');
+        this.load.multiatlas('shipTiles', 'atlas/shipTiles.json', 'atlas/');
+        this.load.json('testjson', 'tiles.json');
     }
 
     public create() {
