@@ -135,7 +135,7 @@ export default class ShipScene extends SceneBase {
                     }
                 } else {
                     this.buildingTile = new Tile(this, tileCoordinates.x * Constants.tileSize, 
-                        tileCoordinates.y * Constants.tileSize, 'shipTiles', 0)
+                        tileCoordinates.y * Constants.tileSize, 'shipTiles', 'hull')
                     this.buildingTile.setOrigin(0.5)
                     this.buildingTile.displayWidth = Constants.tileSize;
                     this.buildingTile.scaleY = this.buildingTile.scaleX;
@@ -186,7 +186,7 @@ export default class ShipScene extends SceneBase {
                 if (this.shipArray[y][x] === 1) {
                     let worldX = x * Constants.tileSize + (Constants.tileSize / 2) - offsetX;
                     let worldY = y * Constants.tileSize + (Constants.tileSize / 2) - offsetY
-                    let tile = new Tile(this, worldX, worldY, 'shipTiles', 0);
+                    let tile = new Tile(this, worldX, worldY, 'shipTiles', 'hull');
                     tile.setOrigin(0.5);
                     tile.displayWidth = Constants.tileSize;
                     tile.scaleY = tile.scaleX;
