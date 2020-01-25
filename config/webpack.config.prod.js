@@ -42,7 +42,7 @@ if (fs.existsSync(paths.appStatic)) {
   filesToCopy.push({
     context: paths.appPath,
     from: 'static',
-    to: 'static',
+    to: '',
     cache: true,
   })
 }
