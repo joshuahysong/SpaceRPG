@@ -14,13 +14,17 @@ declare global {
 const config: Phaser.Types.Core.GameConfig = {
     type: Phaser.AUTO,
     parent: 'app',
-    width: window.innerWidth,
-    height: window.innerHeight,
+    title: 'Phaser Test',
+    version: '0.0.1',
+    width: 1920,
+    height: 1080,
     scene: [BootScene, ShipScene, DebugScene, HudScene],
     scale: {
         mode: Phaser.Scale.RESIZE,
         autoCenter: Phaser.Scale.CENTER_BOTH,
     },
+    disableContextMenu: true,
+    resolution: window.devicePixelRatio,
     plugins: {
         scene: [{
             key: 'rexGestures',

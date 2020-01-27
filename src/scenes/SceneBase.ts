@@ -1,3 +1,5 @@
+import Phaser from 'phaser'
+
 export class SceneBase extends Phaser.Scene {
     public drawLine(x1: number, 
         y1: number, 

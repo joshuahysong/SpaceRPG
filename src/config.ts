@@ -1,4 +1,4 @@
 export class Config {
     static isMobile: boolean = false;
-    static isDebugging: boolean = true;
+    static isDebugging: boolean = false;
 }
