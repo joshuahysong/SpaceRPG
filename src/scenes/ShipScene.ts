@@ -34,7 +34,6 @@ export default class ShipScene extends SceneBase {
             this.scene.run('DebugScene');
         }
         this.scene.run('HudScene');
-        console.log(this.cache.json.get('testjson'))
     }
 
     public update(time: number, delta: number) {
@@ -124,8 +123,18 @@ export default class ShipScene extends SceneBase {
                 this.isHudPointerDown = isHudPointerDown;
         }, this); 
         hudScene.events.on('buildButton', 
-            function () {
-                this.isBuilding = true;
+            function (tileId: integer) {
+                let tiles = this.cache.json.get('testjson');
+                let tileToBuild = tiles.filter(function(tile: any) { return tile.id === tileId })
+                if (tileToBuild && tileToBuild.length === 1) {
+                    this.buildingTile = new Tile(this, -9999, -9999, 'shipTiles', tileToBuild[0].frame)
+                    this.buildingTile.setOrigin(0.5)
+                    this.buildingTile.displayWidth = Constants.tileSize;
+                    this.buildingTile.scaleY = this.buildingTile.scaleX;
+                    this.buildingTile.alpha = 0.5;
+                    this.add.existing(this.buildingTile);
+                    this.isBuilding = true;
+                }
         }, this); 
         this.input.on('pointerup', function() {
             this.isHudPointerDown = false;
@@ -148,14 +157,6 @@ export default class ShipScene extends SceneBase {
                         this.isBuildingTileAllowed = true;
                         this.buildingTile.tint = Phaser.Display.Color.HexStringToColor('#33cc33').color;
                     }
-                } else {
-                    this.buildingTile = new Tile(this, tileCoordinates.x * Constants.tileSize, 
-                        tileCoordinates.y * Constants.tileSize, 'shipTiles', 'hull')
-                    this.buildingTile.setOrigin(0.5)
-                    this.buildingTile.displayWidth = Constants.tileSize;
-                    this.buildingTile.scaleY = this.buildingTile.scaleX;
-                    this.buildingTile.alpha = 0.5;
-                    this.add.existing(this.buildingTile);
                 }
             }
         }, this);
@@ -166,8 +167,10 @@ export default class ShipScene extends SceneBase {
                     this.buildingTile.y,
                     this.buildingTile.texture.key,
                     this.buildingTile.frame.name)
-                newTile.scale = this.buildingTile.scale;
+                newTile.scale = this.buildingTile.scale;                
+                newTile.location = new Phaser.Geom.Point(this.buildingTile.x / Constants.tileSize, this.buildingTile.y / Constants.tileSize);
                 this.add.existing(newTile);
+                this.ship.push(newTile);
                 this.buildingTile.destroy();
                 this.buildingTile = null;
                 this.isBuilding = false;
