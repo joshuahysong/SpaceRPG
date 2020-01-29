@@ -16,12 +16,20 @@ export default class ShipScene extends SceneBase {
     private isBuilding: boolean = false;
     private isBuildingTileAllowed: boolean = false;
     private buildingTile: Tile;
+    private cursors: Phaser.Types.Input.Keyboard.CursorKeys;
     private shipArray: Array<Array<integer>> = [[0,1,0,0,0,0,0],
                                                 [1,1,1,1,1,1,1],
                                                 [0,1,0,0,0,0,0]];
     private ship: Array<Tile>;
 
+    // Keys
+    private keyW: Phaser.Input.Keyboard.Key;
+    private keyA: Phaser.Input.Keyboard.Key;
+    private keyS: Phaser.Input.Keyboard.Key;
+    private keyD: Phaser.Input.Keyboard.Key;
+
     public create() {
+        this.createKeys();
         this.bindDebugEvents();
         this.bindCameraEvents();
         this.bindHudEvents();
@@ -48,6 +56,33 @@ export default class ShipScene extends SceneBase {
             this.oldPointerPosition = this.input.activePointer.position.clone();
         } else {
             this.oldPointerPosition = null;
+        }
+
+        // Arrow keys move map
+        if (!Config.isMobile) {
+            let cameraMoveSpeed = 10;
+            if (this.keyW.isDown || this.cursors.up.isDown) {
+                this.cameras.main.scrollY -= cameraMoveSpeed / this.cameras.main.zoom;
+            }
+            if (this.keyA.isDown || this.cursors.left.isDown) {
+                this.cameras.main.scrollX -= cameraMoveSpeed / this.cameras.main.zoom;
+            }
+            if (this.keyS.isDown || this.cursors.down.isDown) {
+                this.cameras.main.scrollY += cameraMoveSpeed / this.cameras.main.zoom;
+            }
+            if (this.keyD.isDown || this.cursors.right.isDown) {
+                this.cameras.main.scrollX += cameraMoveSpeed / this.cameras.main.zoom;
+            }
+        }
+    }
+
+    private createKeys() {
+        if (!Config.isMobile) {
+            this.cursors = this.input.keyboard.createCursorKeys();
+            this.keyW = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
+            this.keyA = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
+            this.keyS = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
+            this.keyD = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
         }
     }
 
@@ -162,21 +197,25 @@ export default class ShipScene extends SceneBase {
         }, this);
         this.input.on('pointerdown', function(pointer: any) {
             if (this.isBuilding && this.buildingTile && this.isBuildingTileAllowed) {
-                let newTile = new Tile(this, 
-                    this.buildingTile.x,
-                    this.buildingTile.y,
-                    this.buildingTile.texture.key,
-                    this.buildingTile.frame.name)
-                newTile.scale = this.buildingTile.scale;                
-                newTile.location = new Phaser.Geom.Point(this.buildingTile.x / Constants.tileSize, this.buildingTile.y / Constants.tileSize);
-                this.add.existing(newTile);
-                this.ship.push(newTile);
-                this.buildingTile.destroy();
-                this.buildingTile = null;
-                this.isBuilding = false;
-                if (Config.isDebugging) {
-                    this.destroyDebug();
-                    this.drawDebug();
+                this.isHudPointerDown = true;
+                if (pointer.rightButtonDown()) {
+                    this.buildingTile.destroy();
+                    this.buildingTile = null;
+                    this.isBuilding = false;
+                } else {
+                    let newTile = new Tile(this,
+                        this.buildingTile.x,
+                        this.buildingTile.y,
+                        this.buildingTile.texture.key,
+                        this.buildingTile.frame.name)
+                    newTile.scale = this.buildingTile.scale;
+                    newTile.location = new Phaser.Geom.Point(this.buildingTile.x / Constants.tileSize, this.buildingTile.y / Constants.tileSize);
+                    this.add.existing(newTile);
+                    this.ship.push(newTile);
+                    if (Config.isDebugging) {
+                        this.destroyDebug();
+                        this.drawDebug();
+                    }
                 }
             }
         }, this)
