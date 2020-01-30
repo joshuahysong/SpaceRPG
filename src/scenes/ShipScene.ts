@@ -197,12 +197,14 @@ export default class ShipScene extends SceneBase {
                     this.isHudPointerDown = true;
                     // Add new square if needed
                     if (this.buildingTiles.filter((s: Tile) => s.location.x === tileCoordinates.x
-                            && s.location.y === tileCoordinates.y).length <= 0
-                        && this.ship.filter((s: Tile) => s.location.x === tileCoordinates.x
                             && s.location.y === tileCoordinates.y).length <= 0) {
                         let currentFrame = this.buildingTiles[0].frame.name;
                         let newTile = new Tile(this, tileX, tileY, 'shipTiles', currentFrame);
                         newTile.alpha = 0.5;
+                        if (this.ship.filter((s: Tile) => s.location.x === tileCoordinates.x
+                            && s.location.y === tileCoordinates.y).length > 0) {
+                            newTile.tint = Phaser.Display.Color.HexStringToColor('#ff0000').color;
+                        }
                         this.buildingTiles.push(newTile);
                         this.add.existing(newTile);
                     }
@@ -233,14 +235,23 @@ export default class ShipScene extends SceneBase {
             if (this.isBuilding && this.buildingTiles) {
                 if (this.isBuildingTileAllowed) {
                     for (let i = 0; i < this.buildingTiles.length; i++) {
-                        let newTile = new Tile(this,
-                            this.buildingTiles[i].x,
-                            this.buildingTiles[i].y,
-                            this.buildingTiles[i].texture.key,
-                            this.buildingTiles[i].frame.name);
-                        this.add.existing(newTile);
-                        this.ship.push(newTile);
+                        if (this.ship.filter((s: Tile) => s.x === this.buildingTiles[i].x
+                            && s.y === this.buildingTiles[i].y).length <= 0) {
+                            let newTile = new Tile(this,
+                                this.buildingTiles[i].x,
+                                this.buildingTiles[i].y,
+                                this.buildingTiles[i].texture.key,
+                                this.buildingTiles[i].frame.name);
+                            this.add.existing(newTile);
+                            this.ship.push(newTile);
+                        }
                     }
+                    for (let x = 0; x < this.buildingTiles.length; x++) {
+                        if (x !== this.buildingTiles.length - 1) {
+                            this.buildingTiles[x].destroy();
+                        }
+                    }
+                    this.buildingTiles = [this.buildingTiles[this.buildingTiles.length - 1]];
                     if (Config.isDebugging) {
                         this.destroyDebug();
                         this.drawDebug();
