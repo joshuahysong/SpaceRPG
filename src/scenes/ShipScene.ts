@@ -1,7 +1,7 @@
 import { SceneBase } from './SceneBase';
 import { Config } from './../config';
-import { Constants } from './../constants'
-import { Tile } from './../Tile'
+import { Constants } from './../constants';
+import { Tile } from './../Tile';
 
 export default class ShipScene extends SceneBase {
     constructor() {
@@ -15,7 +15,7 @@ export default class ShipScene extends SceneBase {
     private isHudPointerDown: boolean = false;
     private isBuilding: boolean = false;
     private isBuildingTileAllowed: boolean = false;
-    private buildingTile: Tile;
+    private buildingTiles: Array<Tile>;
     private cursors: Phaser.Types.Input.Keyboard.CursorKeys;
     private shipArray: Array<Array<integer>> = [[0,1,0,0,0,0,0],
                                                 [1,1,1,1,1,1,1],
@@ -27,6 +27,7 @@ export default class ShipScene extends SceneBase {
     private keyA: Phaser.Input.Keyboard.Key;
     private keyS: Phaser.Input.Keyboard.Key;
     private keyD: Phaser.Input.Keyboard.Key;
+    private keyEsc: Phaser.Input.Keyboard.Key;
 
     public create() {
         this.createKeys();
@@ -46,20 +47,23 @@ export default class ShipScene extends SceneBase {
 
     public update(time: number, delta: number) {
         // Drag and move map
-        if(!this.isHudPointerDown && (this.input.activePointer.primaryDown && !Config.isMobile)
-            || (this.input.pointer1.isDown && Config.isMobile && !this.input.pointer2.isDown)){
-
-            if (this.oldPointerPosition) {
-                this.cameras.main.scrollX += (this.oldPointerPosition.x - this.input.activePointer.position.x) / this.cameras.main.zoom;
-                this.cameras.main.scrollY += (this.oldPointerPosition.y - this.input.activePointer.position.y) / this.cameras.main.zoom;
+        if (Config.isMobile) {
+            if(!this.isHudPointerDown && this.input.pointer1.isDown && !this.input.pointer2.isDown){
+                if (this.oldPointerPosition) {
+                    this.cameras.main.scrollX += (this.oldPointerPosition.x - this.input.pointer1.position.x) / this.cameras.main.zoom;
+                    this.cameras.main.scrollY += (this.oldPointerPosition.y - this.input.pointer1.position.y) / this.cameras.main.zoom;
+                }
+                this.oldPointerPosition = this.input.pointer1.position.clone();
+            } else {
+                this.oldPointerPosition = null;
             }
-            this.oldPointerPosition = this.input.activePointer.position.clone();
-        } else {
-            this.oldPointerPosition = null;
         }
 
         // Arrow keys move map
         if (!Config.isMobile) {
+            if (this.keyEsc.isDown && this.isBuilding && this.buildingTiles) {
+                this.clearBuildingTiles();
+            }
             let cameraMoveSpeed = 10;
             if (this.keyW.isDown || this.cursors.up.isDown) {
                 this.cameras.main.scrollY -= cameraMoveSpeed / this.cameras.main.zoom;
@@ -83,6 +87,7 @@ export default class ShipScene extends SceneBase {
             this.keyA = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
             this.keyS = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
             this.keyD = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
+            this.keyEsc = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
         }
     }
 
@@ -121,33 +126,37 @@ export default class ShipScene extends SceneBase {
     }
 
     private bindCameraEvents() {
-        // This unneeded pinchScene variable is done becuase intellisense does not find rexGestures
-        let pinchScene: any = this;
-        this.pinch = pinchScene.rexGestures.add.pinch();
-        this.pinch.enable;
         // Zoom events
         let zoomInStop = 2;
         let zoomOutStop = 0.25; 
-        //      Pinch Zoom
-        this.pinch.on('pinch', function(pinch: any) {
-            this.pinchZoom *= pinch.scaleFactor;
-            this.pinchZoom = this.pinchZoom > zoomInStop ? zoomInStop : this.pinchZoom < zoomOutStop ? zoomOutStop : this.pinchZoom;
-            this.cameras.main.zoomTo(this.pinchZoom, 0);
-        }, this);
-        //      Mouse Wheel Zoom
-        this.input.on('wheel', function(pointer: Phaser.Input.Pointer){            
-            let oldZoom = this.cameras.main.zoom;
-            let newZoom = this.cameras.main.zoom;
-            if (pointer.deltaY < 0) {
-                newZoom += oldZoom < 1 ? 0.25 : 0.5;
-            } else if (pointer.deltaY > 0) {
-                newZoom -= oldZoom <= 1 ? 0.25 : 0.5;
-            }
-            newZoom = newZoom > zoomInStop ? zoomInStop : newZoom < zoomOutStop ? zoomOutStop : newZoom;
-            if (oldZoom !== newZoom) {
-                this.cameras.main.zoomTo(newZoom, 150);
-            }
-        }, this);
+        if (Config.isMobile) {
+            // Pinch Zoom
+            // This unneeded pinchScene variable is done becuase intellisense does not find rexGestures
+            let pinchScene: any = this;
+            this.pinch = pinchScene.rexGestures.add.pinch();
+            this.pinch.enable;
+            this.pinch.on('pinch', function(pinch: any) {
+                this.pinchZoom *= pinch.scaleFactor;
+                this.pinchZoom = this.pinchZoom > zoomInStop ? zoomInStop : this.pinchZoom < zoomOutStop ? zoomOutStop : this.pinchZoom;
+                this.cameras.main.zoomTo(this.pinchZoom, 0);
+            }, this);
+        }
+        else {
+            // Mouse Wheel Zoom
+            this.input.on('wheel', function(pointer: Phaser.Input.Pointer){
+                let oldZoom = this.cameras.main.zoom;
+                let newZoom = this.cameras.main.zoom;
+                if (pointer.deltaY < 0) {
+                    newZoom += oldZoom < 1 ? 0.25 : 0.5;
+                } else if (pointer.deltaY > 0) {
+                    newZoom -= oldZoom <= 1 ? 0.25 : 0.5;
+                }
+                newZoom = newZoom > zoomInStop ? zoomInStop : newZoom < zoomOutStop ? zoomOutStop : newZoom;
+                if (oldZoom !== newZoom) {
+                    this.cameras.main.zoomTo(newZoom, 150);
+                }
+            }, this);
+        }
     }
 
     private bindHudEvents() {
@@ -162,12 +171,12 @@ export default class ShipScene extends SceneBase {
                 let tiles = this.cache.json.get('testjson');
                 let tileToBuild = tiles.filter(function(tile: any) { return tile.id === tileId })
                 if (tileToBuild && tileToBuild.length === 1) {
-                    this.buildingTile = new Tile(this, -9999, -9999, 'shipTiles', tileToBuild[0].frame)
-                    this.buildingTile.setOrigin(0.5)
-                    this.buildingTile.displayWidth = Constants.tileSize;
-                    this.buildingTile.scaleY = this.buildingTile.scaleX;
-                    this.buildingTile.alpha = 0.5;
-                    this.add.existing(this.buildingTile);
+                    this.buildingTiles = [];
+                    let outsideBoundsCoordinates = (Constants.worldSize + 1) * Constants.tileSize;
+                    let newTile = new Tile(this, outsideBoundsCoordinates, outsideBoundsCoordinates, 'shipTiles', tileToBuild[0].frame);
+                    newTile.alpha = 0.5;
+                    this.buildingTiles.push(newTile)
+                    this.add.existing(newTile);
                     this.isBuilding = true;
                 }
         }, this); 
@@ -178,40 +187,60 @@ export default class ShipScene extends SceneBase {
 
     private bindTileEvents() {
         this.input.on('pointermove', function (pointer: any) {
-            if (this.isBuilding) {
+            if (this.isBuilding && this.buildingTiles) {
                 let worldPoint = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
                 let tileCoordinates = this.getTileCoordinates(worldPoint.x, worldPoint.y);
-                if (this.buildingTile) {
-                    this.buildingTile.x = tileCoordinates.x * Constants.tileSize;
-                    this.buildingTile.y = tileCoordinates.y * Constants.tileSize;
-                    if (this.ship.filter((s: Tile) => s.location.x === tileCoordinates.x 
+                let tileX = tileCoordinates.x * Constants.tileSize;
+                let tileY = tileCoordinates.y * Constants.tileSize;
+                // If pointerdown then we are dragging so make a line
+                if (pointer.isDown) {
+                    this.isHudPointerDown = true;
+                    // Add new square if needed
+                    if (this.buildingTiles.filter((s: Tile) => s.location.x === tileCoordinates.x
+                            && s.location.y === tileCoordinates.y).length <= 0
+                        && this.ship.filter((s: Tile) => s.location.x === tileCoordinates.x
+                            && s.location.y === tileCoordinates.y).length <= 0) {
+                        let currentFrame = this.buildingTiles[0].frame.name;
+                        let newTile = new Tile(this, tileX, tileY, 'shipTiles', currentFrame);
+                        newTile.alpha = 0.5;
+                        this.buildingTiles.push(newTile);
+                        this.add.existing(newTile);
+                    }
+                } else {
+                    this.buildingTiles[0].x = tileX;
+                    this.buildingTiles[0].y = tileY;
+                    this.buildingTiles[0].updateLocation();
+                    if (this.ship.filter((s: Tile) => s.location.x === tileCoordinates.x
                         && s.location.y === tileCoordinates.y).length > 0) {
                         this.isBuildingTileAllowed = false;
-                        this.buildingTile.tint = Phaser.Display.Color.HexStringToColor('#ff0000').color;
+                        this.buildingTiles[0].tint = Phaser.Display.Color.HexStringToColor('#ff0000').color;
                     } else {
                         this.isBuildingTileAllowed = true;
-                        this.buildingTile.tint = Phaser.Display.Color.HexStringToColor('#33cc33').color;
+                        this.buildingTiles[0].clearTint();
                     }
                 }
             }
         }, this);
         this.input.on('pointerdown', function(pointer: any) {
-            if (this.isBuilding && this.buildingTile && this.isBuildingTileAllowed) {
-                this.isHudPointerDown = true;
+            if (this.isBuilding && this.buildingTiles) {
                 if (pointer.rightButtonDown()) {
-                    this.buildingTile.destroy();
-                    this.buildingTile = null;
-                    this.isBuilding = false;
-                } else {
-                    let newTile = new Tile(this,
-                        this.buildingTile.x,
-                        this.buildingTile.y,
-                        this.buildingTile.texture.key,
-                        this.buildingTile.frame.name)
-                    newTile.scale = this.buildingTile.scale;
-                    newTile.location = new Phaser.Geom.Point(this.buildingTile.x / Constants.tileSize, this.buildingTile.y / Constants.tileSize);
-                    this.add.existing(newTile);
-                    this.ship.push(newTile);
+                    this.clearBuildingTiles();
+                }
+            }
+        }, this);
+        this.input.on('pointerup', function(pointer: any) {
+            this.isHudPointerDown = false;
+            if (this.isBuilding && this.buildingTiles) {
+                if (this.isBuildingTileAllowed) {
+                    for (let i = 0; i < this.buildingTiles.length; i++) {
+                        let newTile = new Tile(this,
+                            this.buildingTiles[i].x,
+                            this.buildingTiles[i].y,
+                            this.buildingTiles[i].texture.key,
+                            this.buildingTiles[i].frame.name);
+                        this.add.existing(newTile);
+                        this.ship.push(newTile);
+                    }
                     if (Config.isDebugging) {
                         this.destroyDebug();
                         this.drawDebug();
@@ -222,7 +251,6 @@ export default class ShipScene extends SceneBase {
     }
 
     private drawGrid() {
-        // TODO Non-square world grid
         let bounds = this.cameras.main.getBounds();
         let targetWidth = bounds.width;
         let targetHeight = bounds.height;
@@ -248,10 +276,6 @@ export default class ShipScene extends SceneBase {
                     let worldX = x * Constants.tileSize + (Constants.tileSize / 2) - offsetX;
                     let worldY = y * Constants.tileSize + (Constants.tileSize / 2) - offsetY
                     let tile = new Tile(this, worldX, worldY, 'shipTiles', 'hull');
-                    tile.setOrigin(0.5);
-                    tile.displayWidth = Constants.tileSize;
-                    tile.scaleY = tile.scaleX;
-                    tile.location = new Phaser.Geom.Point(worldX / Constants.tileSize, worldY / Constants.tileSize);
                     this.add.existing(tile);
                     this.ship.push(tile);
                 };
@@ -283,7 +307,11 @@ export default class ShipScene extends SceneBase {
         return new Phaser.Geom.Point(Math.floor((x + offset) / Constants.tileSize), Math.floor((y + offset) / Constants.tileSize))
     }
 
-    private getTileNeighbors(x: number, y: number) {
-        
+    private clearBuildingTiles() {
+        for (var i = 0; i < this.buildingTiles.length; i++) {
+            this.buildingTiles[i].destroy();
+        }
+        this.buildingTiles = [];
+        this.isBuilding = false;
     }
 }
