@@ -58,7 +58,7 @@ export default class HudScene extends SceneBase {
     }
 
     private createItemButton() {
-        let tiles = this.cache.json.get('testjson');
+        let tiles = this.cache.json.get('itemData');
         let margin = 10;
         let padding = 10;    
         let itemSize = 42;
@@ -73,7 +73,7 @@ export default class HudScene extends SceneBase {
             button.setFillStyle(fillColor);      
             button.setStrokeStyle(1, Phaser.Display.Color.HexStringToColor('#333333').color); 
             button.alpha = 0.75;
-            let tile = new Tile(this, 0, tileY, 'shipTiles', tiles[i].frame);
+            let tile = new Tile(this, 0, tileY, 'shipTiles', tiles[i]);
             tile.setOrigin(0.5);
             tile.displayWidth = itemSize;
             tile.scaleY = tile.scaleX;

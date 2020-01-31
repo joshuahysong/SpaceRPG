@@ -181,6 +181,7 @@
         </struct>
         <key>individualSpriteSettings</key>
         <map type="IndividualSpriteSettingsMap">
+            <key type="filename">textures/buildOutline.png</key>
             <key type="filename">textures/floor.png</key>
             <key type="filename">textures/hull.png</key>
             <struct type="IndividualSpriteSettings">

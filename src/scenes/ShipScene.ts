@@ -168,14 +168,14 @@ export default class ShipScene extends SceneBase {
         }, this); 
         hudScene.events.on('buildButton', 
             function (tileId: integer) {
-                let tiles = this.cache.json.get('testjson');
+                let tiles = this.cache.json.get('itemData');
                 let tileToBuild = tiles.filter(function(tile: any) { return tile.id === tileId })
                 if (tileToBuild && tileToBuild.length === 1) {
                     this.buildingTiles = [];
                     let outsideBoundsCoordinates = (Constants.worldSize + 1) * Constants.tileSize;
-                    let newTile = new Tile(this, outsideBoundsCoordinates, outsideBoundsCoordinates, 'shipTiles', tileToBuild[0].frame);
-                    newTile.alpha = 0.5;
-                    this.buildingTiles.push(newTile)
+                    let newTile = new Tile(this, outsideBoundsCoordinates, outsideBoundsCoordinates, 'shipTiles', tileToBuild[0], true);
+                    newTile.alpha = 0.9;
+                    this.buildingTiles.push(newTile);
                     this.add.existing(newTile);
                     this.isBuilding = true;
                 }
@@ -198,9 +198,8 @@ export default class ShipScene extends SceneBase {
                     // Add new square if needed
                     if (this.buildingTiles.filter((s: Tile) => s.location.x === tileCoordinates.x
                             && s.location.y === tileCoordinates.y).length <= 0) {
-                        let currentFrame = this.buildingTiles[0].frame.name;
-                        let newTile = new Tile(this, tileX, tileY, 'shipTiles', currentFrame);
-                        newTile.alpha = 0.5;
+                        let newTile = new Tile(this, tileX, tileY, 'shipTiles', this.buildingTiles[0].item, true);
+                        newTile.alpha = 0.9;
                         if (this.ship.filter((s: Tile) => s.location.x === tileCoordinates.x
                             && s.location.y === tileCoordinates.y).length > 0) {
                             newTile.tint = Phaser.Display.Color.HexStringToColor('#ff0000').color;
@@ -241,7 +240,7 @@ export default class ShipScene extends SceneBase {
                                 this.buildingTiles[i].x,
                                 this.buildingTiles[i].y,
                                 this.buildingTiles[i].texture.key,
-                                this.buildingTiles[i].frame.name);
+                                this.buildingTiles[i].item);
                             this.add.existing(newTile);
                             this.ship.push(newTile);
                         }
@@ -280,13 +279,14 @@ export default class ShipScene extends SceneBase {
         let offsetX = (this.shipArray[0].length * Constants.tileSize / 2);
         let offsetY = (this.shipArray.length * Constants.tileSize / 2);
         offsetX -= (offsetX - (Constants.tileSize / 2)) % Constants.tileSize;
-        offsetY -= (offsetY - (Constants.tileSize / 2)) % Constants.tileSize;
+        offsetY -= (offsetY - (Constants.tileSize / 2)) % Constants.tileSize;        
+        let tiles = this.cache.json.get('itemData');
         for (let y = 0; y < this.shipArray.length; y++) {
             for (let x = 0; x < this.shipArray[y].length; x++){            
                 if (this.shipArray[y][x] === 1) {
                     let worldX = x * Constants.tileSize + (Constants.tileSize / 2) - offsetX;
                     let worldY = y * Constants.tileSize + (Constants.tileSize / 2) - offsetY
-                    let tile = new Tile(this, worldX, worldY, 'shipTiles', 'hull');
+                    let tile = new Tile(this, worldX, worldY, 'shipTiles', tiles[0]);
                     this.add.existing(tile);
                     this.ship.push(tile);
                 };

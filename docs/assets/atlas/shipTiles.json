@@ -4,13 +4,13 @@
 			"image": "shipTiles.png",
 			"format": "RGBA8888",
 			"size": {
-				"w": 132,
+				"w": 198,
 				"h": 66
 			},
 			"scale": 1,
 			"frames": [
 				{
-					"filename": "floor",
+					"filename": "buildOutline",
 					"rotated": false,
 					"trimmed": false,
 					"sourceSize": {
@@ -31,7 +31,7 @@
 					}
 				},
 				{
-					"filename": "hull",
+					"filename": "floor",
 					"rotated": false,
 					"trimmed": false,
 					"sourceSize": {
@@ -50,6 +50,27 @@
 						"w": 64,
 						"h": 64
 					}
+				},
+				{
+					"filename": "hull",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 64,
+						"h": 64
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 64,
+						"h": 64
+					},
+					"frame": {
+						"x": 133,
+						"y": 1,
+						"w": 64,
+						"h": 64
+					}
 				}
 			]
 		}
@@ -57,6 +78,6 @@
 	"meta": {
 		"app": "https://www.codeandweb.com/texturepacker",
 		"version": "3.0",
-		"smartupdate": "$TexturePacker:SmartUpdate:387f52263578d47448c775eff467e361:efb77707b1276eb1fa092d09aa2ac23e:6fd2d36758896a0b24fe31ad1a32b096$"
+		"smartupdate": "$TexturePacker:SmartUpdate:6d995b67b9c0e9c94cbfe362ae72db37:9447c3866e8f1716c40bf69f945f32bb:6fd2d36758896a0b24fe31ad1a32b096$"
 	}
 }

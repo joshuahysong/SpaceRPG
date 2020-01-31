@@ -9,8 +9,8 @@ export default class BootScene extends SceneBase {
     public preload() {
         Config.isMobile = !this.sys.game.device.os.desktop;
         this.load.setBaseURL('./../assets/');
-        this.load.multiatlas('shipTiles', 'atlas/shipTiles.json', 'atlas/');
-        this.load.json('testjson', 'tiles.json');
+        this.load.multiatlas('shipTiles', 'atlas/shipTiles.json', 'atlas/');        
+        this.load.json('itemData', 'itemData.json');
     }
 
     public create() {
