@@ -190,26 +190,44 @@ export default class ShipScene extends SceneBase {
             if (this.isBuilding && this.buildingTiles) {
                 let worldPoint = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
                 let tileCoordinates = this.getTileCoordinates(worldPoint.x, worldPoint.y);
-                let tileX = tileCoordinates.x * Constants.tileSize;
-                let tileY = tileCoordinates.y * Constants.tileSize;
                 // If pointerdown then we are dragging so make a line
                 if (pointer.isDown) {
                     this.isHudPointerDown = true;
-                    // Add new square if needed
-                    if (this.buildingTiles.filter((s: Tile) => s.location.x === tileCoordinates.x
-                            && s.location.y === tileCoordinates.y).length <= 0) {
-                        let newTile = new Tile(this, tileX, tileY, 'shipTiles', this.buildingTiles[0].item, true);
-                        newTile.alpha = 0.9;
-                        if (this.ship.filter((s: Tile) => s.location.x === tileCoordinates.x
-                            && s.location.y === tileCoordinates.y).length > 0) {
-                            newTile.tint = Phaser.Display.Color.HexStringToColor('#ff0000').color;
+                    // Determine if horizontal or vertical
+                    if ((worldPoint.x - this.buildingTiles[0].x > 0
+                            && worldPoint.x - this.buildingTiles[0].x > worldPoint.y - this.buildingTiles[0].y)
+                        || (worldPoint.x - this.buildingTiles[0].x < 0
+                            && worldPoint.x - this.buildingTiles[0].x < worldPoint.y - this.buildingTiles[0].y)) {
+                        // Horizontal Line
+                        // get amount of sqaures needed to meet cursor
+                        let additionalTilesCount = Math.abs(Math.round((worldPoint.x - this.buildingTiles[0].x) / Constants.tileSize));
+                        if (this.buildingTiles.length < additionalTilesCount + 1) {
+                            let isDrawingLeft = worldPoint.x - this.buildingTiles[0].x < 0 ? true : false;
+                            for (let i = this.buildingTiles.length; i <= additionalTilesCount; i++) {
+                                let tileX = isDrawingLeft ? this.buildingTiles[0].x - (Constants.tileSize * i) : this.buildingTiles[0].x + (Constants.tileSize * i);
+                                let newTile = new Tile(this, tileX, this.buildingTiles[0].y, 'shipTiles', this.buildingTiles[0].item, true);
+                                newTile.alpha = 0.9;
+                                if (this.ship.filter((s: Tile) => s.location.x === tileCoordinates.x
+                                    && s.location.y === tileCoordinates.y).length > 0) {
+                                    newTile.tint = Phaser.Display.Color.HexStringToColor('#ff0000').color;
+                                }
+                                this.buildingTiles.push(newTile);
+                                this.add.existing(newTile);
+                            }
+                        } else if (this.buildingTiles.length > 1 && this.buildingTiles.length > additionalTilesCount + 1) {
+                            let numberToRemove = this.buildingTiles.length - (additionalTilesCount + 1);
+                            for (let i = 1; i <= numberToRemove; i++) {
+                                let destroyedTile = this.buildingTiles.pop();
+                                destroyedTile.destroy();
+                            }
                         }
-                        this.buildingTiles.push(newTile);
-                        this.add.existing(newTile);
+                    } else {
+                        // Vertical Line
+                        console.log("vertical");
                     }
                 } else {
-                    this.buildingTiles[0].x = tileX;
-                    this.buildingTiles[0].y = tileY;
+                    this.buildingTiles[0].x = tileCoordinates.x * Constants.tileSize;
+                    this.buildingTiles[0].y = tileCoordinates.y * Constants.tileSize;
                     this.buildingTiles[0].updateLocation();
                     if (this.ship.filter((s: Tile) => s.location.x === tileCoordinates.x
                         && s.location.y === tileCoordinates.y).length > 0) {

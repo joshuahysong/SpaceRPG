@@ -4,7 +4,6 @@ import { IItem } from './contracts/IItem'
 export class Tile extends Phaser.GameObjects.Sprite {
     constructor(scene: Phaser.Scene, x: number, y: number, texture: string, item: IItem, isBuilding?: boolean) {
         super(scene, x, y, texture, isBuilding ? item.buildFrame : item.frame);
-        console.log(isBuilding ? item.buildFrame : item.frame);
         this.displayWidth = Constants.tileSize;
         this.scaleY = this.scaleX;
         this.setOrigin(0.5);
