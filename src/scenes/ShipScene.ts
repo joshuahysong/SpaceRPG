@@ -10,17 +10,19 @@ export default class ShipScene extends SceneBase {
 
     private oldPointerPosition: Phaser.Math.Vector2;
     private pinch: any;
-    private pinchZoom: number = 1;
     private debugObjects: Array<any>;
+    private buildingDirection: Phaser.Math.Vector2;
+    private buildingTiles: Array<Tile>;
+    private cursors: Phaser.Types.Input.Keyboard.CursorKeys;
+    private ship: Array<Tile>;
+
+    private pinchZoom: number = 1;
     private isHudPointerDown: boolean = false;
     private isBuilding: boolean = false;
     private isBuildingTileAllowed: boolean = false;
-    private buildingTiles: Array<Tile>;
-    private cursors: Phaser.Types.Input.Keyboard.CursorKeys;
     private shipArray: Array<Array<integer>> = [[0,1,0,0,0,0,0],
                                                 [1,1,1,1,1,1,1],
                                                 [0,1,0,0,0,0,0]];
-    private ship: Array<Tile>;
 
     // Keys
     private keyW: Phaser.Input.Keyboard.Key;
@@ -189,43 +191,32 @@ export default class ShipScene extends SceneBase {
         this.input.on('pointermove', function (pointer: any) {
             if (this.isBuilding && this.buildingTiles) {
                 let worldPoint = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
-                let tileCoordinates = this.getTileCoordinates(worldPoint.x, worldPoint.y);
                 // If pointerdown then we are dragging so make a line
                 if (pointer.isDown) {
                     this.isHudPointerDown = true;
-                    // Determine if horizontal or vertical
-                    if ((worldPoint.x - this.buildingTiles[0].x > 0
-                            && worldPoint.x - this.buildingTiles[0].x > worldPoint.y - this.buildingTiles[0].y)
-                        || (worldPoint.x - this.buildingTiles[0].x < 0
-                            && worldPoint.x - this.buildingTiles[0].x < worldPoint.y - this.buildingTiles[0].y)) {
-                        // Horizontal Line
-                        // get amount of sqaures needed to meet cursor
-                        let additionalTilesCount = Math.abs(Math.round((worldPoint.x - this.buildingTiles[0].x) / Constants.tileSize));
-                        if (this.buildingTiles.length < additionalTilesCount + 1) {
-                            let isDrawingLeft = worldPoint.x - this.buildingTiles[0].x < 0 ? true : false;
-                            for (let i = this.buildingTiles.length; i <= additionalTilesCount; i++) {
-                                let tileX = isDrawingLeft ? this.buildingTiles[0].x - (Constants.tileSize * i) : this.buildingTiles[0].x + (Constants.tileSize * i);
-                                let newTile = new Tile(this, tileX, this.buildingTiles[0].y, 'shipTiles', this.buildingTiles[0].item, true);
-                                newTile.alpha = 0.9;
-                                if (this.ship.filter((s: Tile) => s.location.x === tileCoordinates.x
-                                    && s.location.y === tileCoordinates.y).length > 0) {
-                                    newTile.tint = Phaser.Display.Color.HexStringToColor('#ff0000').color;
-                                }
-                                this.buildingTiles.push(newTile);
-                                this.add.existing(newTile);
-                            }
-                        } else if (this.buildingTiles.length > 1 && this.buildingTiles.length > additionalTilesCount + 1) {
-                            let numberToRemove = this.buildingTiles.length - (additionalTilesCount + 1);
-                            for (let i = 1; i <= numberToRemove; i++) {
-                                let destroyedTile = this.buildingTiles.pop();
-                                destroyedTile.destroy();
-                            }
-                        }
+                    let newBuildingDirection;
+                    let angle = Phaser.Math.Angle.Between(this.buildingTiles[0].x, this.buildingTiles[0].y, pointer.worldX, pointer.worldY)
+                    let angleSnapped = Phaser.Math.Snap.To(angle, Math.PI / 2);
+                    if (angleSnapped === 0) {
+                        newBuildingDirection = Phaser.Math.Vector2.RIGHT;
+                    } else if (angleSnapped === Math.PI / 2) {
+                        newBuildingDirection = Phaser.Math.Vector2.DOWN;
+                    } else if (angleSnapped === (-Math.PI / 2)) {
+                        newBuildingDirection = Phaser.Math.Vector2.UP;
                     } else {
-                        // Vertical Line
-                        console.log("vertical");
+                        newBuildingDirection = Phaser.Math.Vector2.LEFT;
                     }
+                    // Clear additional tiles if we are building in a new direction;
+                    if (newBuildingDirection != this.buildingDirection && this.buildingTiles.length > 1) {                        
+                        for (var i = 1; i < this.buildingTiles.length; i++) {
+                            this.buildingTiles[i].destroy();
+                        }
+                        this.buildingTiles.length = 1;
+                    }
+                    this.buildingDirection = newBuildingDirection;
+                    this.createBuildTiles(newBuildingDirection, worldPoint);
                 } else {
+                    let tileCoordinates = this.getTileCoordinates(worldPoint.x, worldPoint.y);
                     this.buildingTiles[0].x = tileCoordinates.x * Constants.tileSize;
                     this.buildingTiles[0].y = tileCoordinates.y * Constants.tileSize;
                     this.buildingTiles[0].updateLocation();
@@ -304,7 +295,7 @@ export default class ShipScene extends SceneBase {
                 if (this.shipArray[y][x] === 1) {
                     let worldX = x * Constants.tileSize + (Constants.tileSize / 2) - offsetX;
                     let worldY = y * Constants.tileSize + (Constants.tileSize / 2) - offsetY
-                    let tile = new Tile(this, worldX, worldY, 'shipTiles', tiles[0]);
+                    let tile = new Tile(this, worldX, worldY, 'shipTiles', tiles[1]);
                     this.add.existing(tile);
                     this.ship.push(tile);
                 };
@@ -342,5 +333,42 @@ export default class ShipScene extends SceneBase {
         }
         this.buildingTiles = [];
         this.isBuilding = false;
+    }
+
+    private createBuildTiles(direction: Phaser.Math.Vector2, worldPoint: Phaser.Geom.Point) {
+        let additionalTilesCount;
+        if (direction === Phaser.Math.Vector2.LEFT || direction === Phaser.Math.Vector2.RIGHT) {
+            additionalTilesCount = Math.abs(Math.round((worldPoint.x - this.buildingTiles[0].x) / Constants.tileSize));
+        } else {
+            additionalTilesCount = Math.abs(Math.round((worldPoint.y - this.buildingTiles[0].y) / Constants.tileSize));
+        }
+        if (this.buildingTiles.length < additionalTilesCount + 1) {
+            for (let i = this.buildingTiles.length; i <= additionalTilesCount; i++) {
+                let tileX = this.buildingTiles[0].x;
+                let tileY = this.buildingTiles[0].y;
+                if (direction === Phaser.Math.Vector2.RIGHT) {
+                    tileX = this.buildingTiles[0].x + (Constants.tileSize * i);
+                } else if (direction === Phaser.Math.Vector2.LEFT) {
+                    tileX = this.buildingTiles[0].x - (Constants.tileSize * i);
+                } else if (direction === Phaser.Math.Vector2.UP) {
+                    tileY = this.buildingTiles[0].y - (Constants.tileSize * i);
+                } else {
+                    tileY = this.buildingTiles[0].y + (Constants.tileSize * i);
+                }
+                let newTile = new Tile(this, tileX, tileY, 'shipTiles', this.buildingTiles[0].item, true);
+                newTile.alpha = 0.9;
+                if (this.ship.filter((s: Tile) => s.location.x === newTile.location.x
+                    && s.location.y === newTile.location.y).length <= 0) {
+                        this.buildingTiles.push(newTile);
+                        this.add.existing(newTile);
+                }
+            }
+        } else if (this.buildingTiles.length > 1 && this.buildingTiles.length > additionalTilesCount + 1) {
+            let numberToRemove = this.buildingTiles.length - (additionalTilesCount + 1);
+            for (let i = 1; i <= numberToRemove; i++) {
+                let destroyedTile = this.buildingTiles.pop();
+                destroyedTile.destroy();
+            }
+        }
     }
 }
