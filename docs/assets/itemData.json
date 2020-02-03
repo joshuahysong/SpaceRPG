@@ -3,12 +3,14 @@
         "id": 1,
         "name": "Hull",
         "frame": "hull",
-        "buildFrame": "buildOutline"
+        "buildFrame": "buildOutline",
+        "buildType": "line"
     },
     {
         "id": 2,
         "name": "Floor",
         "frame": "floor",
-        "buildFrame": "buildOutline"
+        "buildFrame": "buildOutline",
+        "buildType": "area"
     }
 ]

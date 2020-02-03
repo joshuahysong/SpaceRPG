@@ -19,7 +19,6 @@ export default class ShipScene extends SceneBase {
     private pinchZoom: number = 1;
     private isHudPointerDown: boolean = false;
     private isBuilding: boolean = false;
-    private isBuildingTileAllowed: boolean = false;
     private shipArray: Array<Array<integer>> = [[0,1,0,0,0,0,0],
                                                 [1,1,1,1,1,1,1],
                                                 [0,1,0,0,0,0,0]];
@@ -181,10 +180,7 @@ export default class ShipScene extends SceneBase {
                     this.add.existing(newTile);
                     this.isBuilding = true;
                 }
-        }, this); 
-        this.input.on('pointerup', function() {
-            this.isHudPointerDown = false;
-        }, this)
+        }, this);
     }
 
     private bindTileEvents() {
@@ -222,10 +218,8 @@ export default class ShipScene extends SceneBase {
                     this.buildingTiles[0].updateLocation();
                     if (this.ship.filter((s: Tile) => s.location.x === tileCoordinates.x
                         && s.location.y === tileCoordinates.y).length > 0) {
-                        this.isBuildingTileAllowed = false;
                         this.buildingTiles[0].tint = Phaser.Display.Color.HexStringToColor('#ff0000').color;
                     } else {
-                        this.isBuildingTileAllowed = true;
                         this.buildingTiles[0].clearTint();
                     }
                 }
@@ -238,32 +232,29 @@ export default class ShipScene extends SceneBase {
                 }
             }
         }, this);
-        this.input.on('pointerup', function(pointer: any) {
+        this.input.on('pointerup', function() {
             this.isHudPointerDown = false;
             if (this.isBuilding && this.buildingTiles) {
-                if (this.isBuildingTileAllowed) {
-                    for (let i = 0; i < this.buildingTiles.length; i++) {
-                        if (this.ship.filter((s: Tile) => s.x === this.buildingTiles[i].x
-                            && s.y === this.buildingTiles[i].y).length <= 0) {
-                            let newTile = new Tile(this,
-                                this.buildingTiles[i].x,
-                                this.buildingTiles[i].y,
-                                this.buildingTiles[i].texture.key,
-                                this.buildingTiles[i].item);
-                            this.add.existing(newTile);
-                            this.ship.push(newTile);
-                        }
+                for (let i = 0; i < this.buildingTiles.length; i++) {
+                    if (this.ship.filter((s: Tile) => s.x === this.buildingTiles[i].x
+                        && s.y === this.buildingTiles[i].y).length <= 0) {
+                        let newTile = new Tile(this,
+                            this.buildingTiles[i].x,
+                            this.buildingTiles[i].y,
+                            this.buildingTiles[i].texture.key,
+                            this.buildingTiles[i].item);
+                        this.add.existing(newTile);
+                        this.ship.push(newTile);
                     }
-                    for (let x = 0; x < this.buildingTiles.length; x++) {
-                        if (x !== this.buildingTiles.length - 1) {
-                            this.buildingTiles[x].destroy();
-                        }
-                    }
-                    this.buildingTiles = [this.buildingTiles[this.buildingTiles.length - 1]];
-                    if (Config.isDebugging) {
-                        this.destroyDebug();
-                        this.drawDebug();
-                    }
+                }
+                for (let x = 1; x < this.buildingTiles.length; x++) {
+                    this.buildingTiles[x].destroy();
+                }
+                this.buildingTiles.length = 1;
+                this.buildingTiles[0].setDepth(1);
+                if (Config.isDebugging) {
+                    this.destroyDebug();
+                    this.drawDebug();
                 }
             }
         }, this)
@@ -336,7 +327,7 @@ export default class ShipScene extends SceneBase {
     }
 
     private createBuildTiles(direction: Phaser.Math.Vector2, worldPoint: Phaser.Geom.Point) {
-        let additionalTilesCount;
+        let additionalTilesCount: integer;
         if (direction === Phaser.Math.Vector2.LEFT || direction === Phaser.Math.Vector2.RIGHT) {
             additionalTilesCount = Math.abs(Math.round((worldPoint.x - this.buildingTiles[0].x) / Constants.tileSize));
         } else {
