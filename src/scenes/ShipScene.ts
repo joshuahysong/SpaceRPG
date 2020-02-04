@@ -225,7 +225,36 @@ export default class ShipScene extends SceneBase {
                             yTilesCount += Math.abs(Math.round((worldPoint.y - this.buildingTiles[0].y) / Constants.tileSize));
                         }
                     }
-                    this.createBuildTiles(xTilesCount, yTilesCount);
+                    // Reset build tiles
+                    for (let x = 1; x < this.buildingTiles.length; x++) {
+                        this.buildingTiles[x].destroy();
+                    }
+                    this.buildingTiles.length = 1;
+                    // Limit to max build size
+                    xTilesCount = xTilesCount > Constants.maxBuildSize ? Constants.maxBuildSize : xTilesCount < -Constants.maxBuildSize ? -Constants.maxBuildSize : xTilesCount;
+                    yTilesCount = yTilesCount > Constants.maxBuildSize ? Constants.maxBuildSize : yTilesCount < -Constants.maxBuildSize ? -Constants.maxBuildSize : yTilesCount;
+                    // Recreate all build tiles
+                    let startLoopX = xTilesCount >= 0 ? 0 : xTilesCount;
+                    let startLoopY = yTilesCount >= 0 ? 0 : yTilesCount;
+                    let endLoopX = xTilesCount >= 0 ? xTilesCount : 0;
+                    let endLoopY = yTilesCount >= 0 ? yTilesCount : 0;
+                    let originX = this.buildingTiles[0].x;
+                    let originY = this.buildingTiles[0].y;
+                    for (let y = startLoopY; y <= endLoopY; y++) {
+                        for (let x = startLoopX; x <= endLoopX; x++) {
+                            if (!(y === 0 && x === 0)) {
+                                let tileX = originX + Constants.tileSize * x;
+                                let tileY = originY + Constants.tileSize * y;
+                                let newTile = new Tile(this, tileX, tileY, 'shipTiles', this.buildingTiles[0].item, true);
+                                newTile.alpha = 0.9;
+                                if (this.ship.filter((s: Tile) => s.location.x === newTile.location.x
+                                    && s.location.y === newTile.location.y).length <= 0) {
+                                    this.buildingTiles.push(newTile);
+                                    this.add.existing(newTile);
+                                }
+                            }
+                        }
+                    }
                 } else {
                     let tileCoordinates = this.getTileCoordinates(worldPoint.x, worldPoint.y);
                     this.buildingTiles[0].x = tileCoordinates.x * Constants.tileSize;
@@ -339,36 +368,5 @@ export default class ShipScene extends SceneBase {
         }
         this.buildingTiles = [];
         this.isBuilding = false;
-    }
-
-    private createBuildTiles(xTilesCount: integer, yTilesCount: integer) {
-        // Reset build tiles
-        for (let x = 1; x < this.buildingTiles.length; x++) {
-            this.buildingTiles[x].destroy();
-        }
-        this.buildingTiles.length = 1;
-
-        // Recreate all build tiles
-        let startLoopX = xTilesCount >= 0 ? 0 : xTilesCount;
-        let startLoopY = yTilesCount >= 0 ? 0 : yTilesCount;
-        let endLoopX = xTilesCount >= 0 ? xTilesCount : 0;
-        let endLoopY = yTilesCount >= 0 ? yTilesCount : 0;
-        let originX = this.buildingTiles[0].x;
-        let originY = this.buildingTiles[0].y;
-        for (let y = startLoopY; y <= endLoopY; y++) {
-            for (let x = startLoopX; x <= endLoopX; x++) {
-                if (!(y === 0 && x === 0)) {
-                    let tileX = originX + Constants.tileSize * x;
-                    let tileY = originY + Constants.tileSize * y;
-                    let newTile = new Tile(this, tileX, tileY, 'shipTiles', this.buildingTiles[0].item, true);
-                    newTile.alpha = 0.9;
-                    if (this.ship.filter((s: Tile) => s.location.x === newTile.location.x
-                        && s.location.y === newTile.location.y).length <= 0) {
-                        this.buildingTiles.push(newTile);
-                        this.add.existing(newTile);
-                    }
-                }
-            }
-        }
     }
 }
