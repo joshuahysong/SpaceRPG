@@ -9,9 +9,7 @@ export default class ShipScene extends SceneBase {
     }
 
     private oldPointerPosition: Phaser.Math.Vector2;
-    private pinch: any;
     private debugObjects: Array<any>;
-    private buildingDirection: Phaser.Math.Vector2;
     private buildingTiles: Array<Tile>;
     private cursors: Phaser.Types.Input.Keyboard.CursorKeys;
     private ship: Array<Tile>;
@@ -129,20 +127,19 @@ export default class ShipScene extends SceneBase {
     private bindCameraEvents() {
         // Zoom events
         let zoomInStop = 2;
-        let zoomOutStop = 0.25; 
+        let zoomOutStop = 0.25;
         if (Config.isMobile) {
             // Pinch Zoom
             // This unneeded pinchScene variable is done becuase intellisense does not find rexGestures
             let pinchScene: any = this;
-            this.pinch = pinchScene.rexGestures.add.pinch();
-            this.pinch.enable;
-            this.pinch.on('pinch', function(pinch: any) {
+            let pinch = pinchScene.rexGestures.add.pinch();
+            pinch.enable;
+            pinch.on('pinch', function(pinch: any) {
                 this.pinchZoom *= pinch.scaleFactor;
                 this.pinchZoom = this.pinchZoom > zoomInStop ? zoomInStop : this.pinchZoom < zoomOutStop ? zoomOutStop : this.pinchZoom;
                 this.cameras.main.zoomTo(this.pinchZoom, 0);
             }, this);
-        }
-        else {
+        } else {
             // Mouse Wheel Zoom
             this.input.on('wheel', function(pointer: Phaser.Input.Pointer){
                 let oldZoom = this.cameras.main.zoom;
@@ -190,27 +187,45 @@ export default class ShipScene extends SceneBase {
                 // If pointerdown then we are dragging so make a line
                 if (pointer.isDown) {
                     this.isHudPointerDown = true;
-                    let newBuildingDirection;
-                    let angle = Phaser.Math.Angle.Between(this.buildingTiles[0].x, this.buildingTiles[0].y, pointer.worldX, pointer.worldY)
-                    let angleSnapped = Phaser.Math.Snap.To(angle, Math.PI / 2);
-                    if (angleSnapped === 0) {
-                        newBuildingDirection = Phaser.Math.Vector2.RIGHT;
-                    } else if (angleSnapped === Math.PI / 2) {
-                        newBuildingDirection = Phaser.Math.Vector2.DOWN;
-                    } else if (angleSnapped === (-Math.PI / 2)) {
-                        newBuildingDirection = Phaser.Math.Vector2.UP;
-                    } else {
-                        newBuildingDirection = Phaser.Math.Vector2.LEFT;
-                    }
-                    // Clear additional tiles if we are building in a new direction;
-                    if (newBuildingDirection != this.buildingDirection && this.buildingTiles.length > 1) {                        
-                        for (var i = 1; i < this.buildingTiles.length; i++) {
-                            this.buildingTiles[i].destroy();
+                    let xTilesCount: integer = 0;
+                    let yTilesCount: integer = 0;
+                    let angle = Phaser.Math.Angle.Between(this.buildingTiles[0].x, this.buildingTiles[0].y, pointer.worldX, pointer.worldY);
+                    if (this.buildingTiles[0].item.buildType === "line") {
+                        let angleSnapped = Phaser.Math.Snap.To(angle, Math.PI / 2);
+                        if (angleSnapped === 0) {
+                            // Right
+                            xTilesCount += Math.abs(Math.round((worldPoint.x - this.buildingTiles[0].x) / Constants.tileSize));
+                        } else if (angleSnapped === Math.PI / 2) {
+                            // Down
+                            yTilesCount += Math.abs(Math.round((worldPoint.y - this.buildingTiles[0].y) / Constants.tileSize));
+                        } else if (angleSnapped === (-Math.PI / 2)) {
+                            // Up
+                            yTilesCount -= Math.abs(Math.round((worldPoint.y - this.buildingTiles[0].y) / Constants.tileSize));
+                        } else {
+                            // Left
+                            xTilesCount -= Math.abs(Math.round((worldPoint.x - this.buildingTiles[0].x) / Constants.tileSize));
                         }
-                        this.buildingTiles.length = 1;
+                    } else if (this.buildingTiles[0].item.buildType === "area") {
+                        let angleSnapped = Phaser.Math.Snap.To(angle, Math.PI / 2, Math.PI / 4);
+                        if (angleSnapped === -Math.PI / 4) {
+                            // Upper Right
+                            xTilesCount += Math.abs(Math.round((worldPoint.x - this.buildingTiles[0].x) / Constants.tileSize));
+                            yTilesCount -= Math.abs(Math.round((worldPoint.y - this.buildingTiles[0].y) / Constants.tileSize));
+                        } else if (angleSnapped === Math.PI / 4) {
+                            // Bottom Right
+                            xTilesCount += Math.abs(Math.round((worldPoint.x - this.buildingTiles[0].x) / Constants.tileSize));
+                            yTilesCount += Math.abs(Math.round((worldPoint.y - this.buildingTiles[0].y) / Constants.tileSize));
+                        } else if (angleSnapped === ((Math.PI / 2) + (Math.PI / 4)) * -1) {
+                            // Upper Left
+                            xTilesCount -= Math.abs(Math.round((worldPoint.x - this.buildingTiles[0].x) / Constants.tileSize));
+                            yTilesCount -= Math.abs(Math.round((worldPoint.y - this.buildingTiles[0].y) / Constants.tileSize));
+                        } else if (angleSnapped === (Math.PI / 2) + (Math.PI / 4)) {
+                            // Bottom Left
+                            xTilesCount -= Math.abs(Math.round((worldPoint.x - this.buildingTiles[0].x) / Constants.tileSize));
+                            yTilesCount += Math.abs(Math.round((worldPoint.y - this.buildingTiles[0].y) / Constants.tileSize));
+                        }
                     }
-                    this.buildingDirection = newBuildingDirection;
-                    this.createBuildTiles(newBuildingDirection, worldPoint);
+                    this.createBuildTiles(xTilesCount, yTilesCount);
                 } else {
                     let tileCoordinates = this.getTileCoordinates(worldPoint.x, worldPoint.y);
                     this.buildingTiles[0].x = tileCoordinates.x * Constants.tileSize;
@@ -326,39 +341,33 @@ export default class ShipScene extends SceneBase {
         this.isBuilding = false;
     }
 
-    private createBuildTiles(direction: Phaser.Math.Vector2, worldPoint: Phaser.Geom.Point) {
-        let additionalTilesCount: integer;
-        if (direction === Phaser.Math.Vector2.LEFT || direction === Phaser.Math.Vector2.RIGHT) {
-            additionalTilesCount = Math.abs(Math.round((worldPoint.x - this.buildingTiles[0].x) / Constants.tileSize));
-        } else {
-            additionalTilesCount = Math.abs(Math.round((worldPoint.y - this.buildingTiles[0].y) / Constants.tileSize));
+    private createBuildTiles(xTilesCount: integer, yTilesCount: integer) {
+        // Reset build tiles
+        for (let x = 1; x < this.buildingTiles.length; x++) {
+            this.buildingTiles[x].destroy();
         }
-        if (this.buildingTiles.length < additionalTilesCount + 1) {
-            for (let i = this.buildingTiles.length; i <= additionalTilesCount; i++) {
-                let tileX = this.buildingTiles[0].x;
-                let tileY = this.buildingTiles[0].y;
-                if (direction === Phaser.Math.Vector2.RIGHT) {
-                    tileX = this.buildingTiles[0].x + (Constants.tileSize * i);
-                } else if (direction === Phaser.Math.Vector2.LEFT) {
-                    tileX = this.buildingTiles[0].x - (Constants.tileSize * i);
-                } else if (direction === Phaser.Math.Vector2.UP) {
-                    tileY = this.buildingTiles[0].y - (Constants.tileSize * i);
-                } else {
-                    tileY = this.buildingTiles[0].y + (Constants.tileSize * i);
-                }
-                let newTile = new Tile(this, tileX, tileY, 'shipTiles', this.buildingTiles[0].item, true);
-                newTile.alpha = 0.9;
-                if (this.ship.filter((s: Tile) => s.location.x === newTile.location.x
-                    && s.location.y === newTile.location.y).length <= 0) {
+        this.buildingTiles.length = 1;
+
+        // Recreate all build tiles
+        let startLoopX = xTilesCount >= 0 ? 0 : xTilesCount;
+        let startLoopY = yTilesCount >= 0 ? 0 : yTilesCount;
+        let endLoopX = xTilesCount >= 0 ? xTilesCount : 0;
+        let endLoopY = yTilesCount >= 0 ? yTilesCount : 0;
+        let originX = this.buildingTiles[0].x;
+        let originY = this.buildingTiles[0].y;
+        for (let y = startLoopY; y <= endLoopY; y++) {
+            for (let x = startLoopX; x <= endLoopX; x++) {
+                if (!(y === 0 && x === 0)) {
+                    let tileX = originX + Constants.tileSize * x;
+                    let tileY = originY + Constants.tileSize * y;
+                    let newTile = new Tile(this, tileX, tileY, 'shipTiles', this.buildingTiles[0].item, true);
+                    newTile.alpha = 0.9;
+                    if (this.ship.filter((s: Tile) => s.location.x === newTile.location.x
+                        && s.location.y === newTile.location.y).length <= 0) {
                         this.buildingTiles.push(newTile);
                         this.add.existing(newTile);
+                    }
                 }
-            }
-        } else if (this.buildingTiles.length > 1 && this.buildingTiles.length > additionalTilesCount + 1) {
-            let numberToRemove = this.buildingTiles.length - (additionalTilesCount + 1);
-            for (let i = 1; i <= numberToRemove; i++) {
-                let destroyedTile = this.buildingTiles.pop();
-                destroyedTile.destroy();
             }
         }
     }
